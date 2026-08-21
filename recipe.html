@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Maiale alle prugne</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f7f6f2;
+      color: #1f1f1f;
+    }
+
+    header {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid #dedbd3;
+    }
+
+    .back {
+      color: #1f1f1f;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .language {
+      font-size: 13px;
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 30px 24px 60px;
+    }
+
+    h1 {
+      font-size: 30px;
+      margin: 0 0 8px;
+    }
+
+    .meta {
+      font-size: 14px;
+      color: #777;
+      margin-bottom: 24px;
+    }
+
+    .recipe-top {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    .recipe-image {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+
+    h2 {
+      font-size: 14px;
+      letter-spacing: 1px;
+      margin: 0 0 14px;
+    }
+
+    .ingredients {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .ingredients li {
+      padding: 8px 0;
+      border-bottom: 1px solid #dedbd3;
+      font-size: 15px;
+    }
+
+    .preparation {
+      margin-top: 40px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 10px;
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+
+    .step-number {
+      font-weight: bold;
+      color: #888;
+    }
+
+    @media (max-width: 650px) {
+
+      header {
+        height: 56px;
+        padding: 0 16px;
+      }
+
+      main {
+        padding: 22px 16px 50px;
+      }
+
+      h1 {
+        font-size: 25px;
+      }
+
+      .recipe-top {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .preparation {
+        margin-top: 32px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <a class="back" href="index.html">← Ricette</a>
+  <div class="language">IT &nbsp;|&nbsp; EN</div>
+</header>
+
+<main>
+
+  <h1>Maiale alle prugne</h1>
+
+  <div class="meta">
+    45 min · 4 persone
+  </div>
+
+  <div class="recipe-top">
+
+    <img
+      class="recipe-image"
+      src="https://images.unsplash.com/photo-1547592180-85f173990554"
+      alt="Maiale alle prugne"
+    >
+
+    <div>
+
+      <h2>INGREDIENTI</h2>
+
+      <ul class="ingredients">
+        <li>600 g filetto di maiale</li>
+        <li>6 prugne</li>
+        <li>1 cucchiaio di miele</li>
+        <li>2 cucchiai di aceto balsamico</li>
+        <li>1 cipolla piccola</li>
+        <li>Olio extravergine d'oliva</li>
+        <li>Sale e pepe</li>
+      </ul>
+
+    </div>
+
+  </div>
+
+  <div class="preparation">
+
+    <h2>PREPARAZIONE</h2>
+
+    <div class="step">
+      <div class="step-number">1</div>
+      <div>
+        Taglia il filetto di maiale e rosolalo in padella con un filo d'olio.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">2</div>
+      <div>
+        Aggiungi la cipolla e lasciala appassire.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">3</div>
+      <div>
+        Aggiungi le prugne, il miele e l'aceto balsamico.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">4</div>
+      <div>
+        Continua la cottura fino a ottenere una salsa leggermente densa.
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+</body>
+</html>
