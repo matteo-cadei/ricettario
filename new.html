@@ -1,1 +1,212 @@
-new.html
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aggiungi ricetta</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f7f6f2;
+      color: #1f1f1f;
+    }
+
+    header {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid #dedbd3;
+    }
+
+    .back {
+      color: #1f1f1f;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 30px 24px 60px;
+    }
+
+    h1 {
+      margin: 0 0 28px;
+      font-size: 28px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #d6d2c9;
+      background: white;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 130px;
+      line-height: 1.5;
+    }
+
+    #ingredients {
+      min-height: 180px;
+    }
+
+    #instructions {
+      min-height: 220px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    button {
+      border: 1px solid #d6d2c9;
+      background: white;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .save {
+      background: #1f1f1f;
+      color: white;
+      border-color: #1f1f1f;
+    }
+
+    @media (max-width: 650px) {
+      header {
+        height: 56px;
+        padding: 0 16px;
+      }
+
+      main {
+        padding: 22px 16px 50px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field.full {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <a href="index.html" class="back">← Ricette</a>
+</header>
+
+<main>
+
+  <h1>Aggiungi ricetta</h1>
+
+  <form>
+
+    <div class="form-grid">
+
+      <div class="field full">
+        <label for="title">Titolo</label>
+        <input id="title" type="text" placeholder="Es. Maiale alle prugne">
+      </div>
+
+      <div class="field">
+        <label for="category">Categoria</label>
+        <select id="category">
+          <option>Primi</option>
+          <option>Secondi</option>
+          <option>Contorni</option>
+          <option>Dolci</option>
+          <option>Altro</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="servings">Porzioni</label>
+        <input id="servings" type="number" min="1" placeholder="4">
+      </div>
+
+      <div class="field">
+        <label for="time">Tempo</label>
+        <input id="time" type="text" placeholder="45 min">
+      </div>
+
+      <div class="field">
+        <label for="image">Immagine</label>
+        <input id="image" type="file" accept="image/*">
+      </div>
+
+      <div class="field full">
+        <label for="ingredients">Ingredienti</label>
+        <textarea
+          id="ingredients"
+          placeholder="600 g filetto di maiale&#10;6 prugne&#10;1 cucchiaio di miele&#10;..."
+        ></textarea>
+      </div>
+
+      <div class="field full">
+        <label for="instructions">Preparazione</label>
+        <textarea
+          id="instructions"
+          placeholder="1. Rosola il filetto...&#10;&#10;2. Aggiungi le prugne...&#10;&#10;3. Continua la cottura..."
+        ></textarea>
+      </div>
+
+    </div>
+
+    <div class="actions">
+      <a href="index.html">
+        <button type="button">Annulla</button>
+      </a>
+
+      <button type="submit" class="save">Salva ricetta</button>
+    </div>
+
+  </form>
+
+</main>
+
+</body>
+</html>
