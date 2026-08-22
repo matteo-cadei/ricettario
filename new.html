@@ -370,18 +370,27 @@ setLanguage(currentLanguage);
         imageUrl = publicUrlData.publicUrl;
       }
 
+      const recipeData = {
+        category: category,
+        servings: servings ? Number(servings) : null,
+        time: time || null,
+        made_by: madeBy || null,
+        image_url: imageUrl
+      };
+      
+      if (currentLanguage === "en") {
+        recipeData.title_en = title;
+        recipeData.ingredients_en = ingredients || null;
+        recipeData.instructions_en = instructions || null;
+      } else {
+        recipeData.title = title;
+        recipeData.ingredients = ingredients || null;
+        recipeData.instructions = instructions || null;
+      }
+      
       const { error: insertError } = await supabaseClient
         .from("recipes")
-        .insert({
-          title: title,
-          category: category,
-          servings: servings ? Number(servings) : null,
-          time: time || null,
-          made_by: madeBy || null,
-          ingredients: ingredients || null,
-          instructions: instructions || null,
-          image_url: imageUrl
-        });
+        .insert(recipeData);
 
       if (insertError) {
         throw insertError;
