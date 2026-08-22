@@ -362,13 +362,22 @@
       return;
     }
 
-    document.getElementById("title").value = recipe.title || "";
+    document.getElementById("title").value =
+      currentLanguage === "en"
+        ? (recipe.title_en || "")
+        : (recipe.title || "");
     document.getElementById("category").value = recipe.category || "Altro";
     document.getElementById("servings").value = recipe.servings || "";
     document.getElementById("time").value = recipe.time || "";
     document.getElementById("made_by").value = recipe.made_by || "";
-    document.getElementById("ingredients").value = recipe.ingredients || "";
-    document.getElementById("instructions").value = recipe.instructions || "";
+    document.getElementById("ingredients").value =
+      currentLanguage === "en"
+        ? (recipe.ingredients_en || "")
+        : (recipe.ingredients || "");
+    document.getElementById("instructions").value =
+      currentLanguage === "en"
+        ? (recipe.instructions_en || "")
+        : (recipe.instructions || "");
 
     currentImageUrl = recipe.image_url || null;
   }
@@ -415,18 +424,27 @@
         imageUrl = publicUrlData.publicUrl;
       }
 
+      const recipeData = {
+        category: category,
+        servings: servings ? Number(servings) : null,
+        time: time || null,
+        made_by: madeBy || null,
+        image_url: imageUrl
+      };
+      
+      if (currentLanguage === "en") {
+        recipeData.title_en = title;
+        recipeData.ingredients_en = ingredients || null;
+        recipeData.instructions_en = instructions || null;
+      } else {
+        recipeData.title = title;
+        recipeData.ingredients = ingredients || null;
+        recipeData.instructions = instructions || null;
+      }
+      
       const { error: updateError } = await supabaseClient
         .from("recipes")
-        .update({
-          title: title,
-          category: category,
-          servings: servings ? Number(servings) : null,
-          time: time || null,
-          made_by: madeBy || null,
-          ingredients: ingredients || null,
-          instructions: instructions || null,
-          image_url: imageUrl
-        })
+        .update(recipeData)
         .eq("id", recipeId);
 
       if (updateError) {
