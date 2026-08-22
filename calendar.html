@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="it">
-
+  
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>A Tavola — Calendario</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     * {
@@ -186,6 +186,65 @@
       .meal-name {
         font-size: 13px;
       }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 100;
+      }
+      
+      .modal.hidden {
+        display: none;
+      }
+      
+      .modal-content {
+        width: 100%;
+        max-width: 420px;
+        max-height: 70vh;
+        overflow-y: auto;
+        background: #f7f6f2;
+        border-radius: 12px;
+        padding: 16px;
+      }
+      
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      
+      #close-modal {
+        border: none;
+        background: transparent;
+        font-size: 22px;
+        padding: 4px 8px;
+      }
+      
+      .recipe-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      
+      .recipe-choice {
+        width: 100%;
+        text-align: left;
+        background: white;
+        border: 1px solid #dedbd3;
+        border-radius: 8px;
+        padding: 10px 12px;
+        cursor: pointer;
+      }
+      
+      .recipe-choice:hover {
+        background: #efede7;
+      }
     }
   </style>
 </head>
@@ -229,7 +288,32 @@
 
 </main>
 
+  <div id="recipe-modal" class="modal hidden">
+    <div class="modal-content">
+  
+      <div class="modal-header">
+        <strong id="modal-title">Scegli una ricetta</strong>
+        <button type="button" id="close-modal">×</button>
+      </div>
+  
+      <div id="recipe-list" class="recipe-list"></div>
+  
+    </div>
+  </div>
+  
 <script>
+  const SUPABASE_URL = "https://qhrthaaqsgeyqsnaefhb.supabase.co";
+  const SUPABASE_KEY = "INCOLLA_LA_STESSA_PUBLISHABLE_KEY";
+
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  let selectedDate = null;
+  let selectedMeal = null;
+  let currentWeek = new Date();
+
   const translations = {
     it: {
       logo: "A Tavola",
@@ -237,6 +321,10 @@
       lunch: "Pranzo",
       dinner: "Cena",
       export: "Esporta",
+      chooseRecipe: "Scegli una ricetta",
+      loading: "Caricamento...",
+      loadError: "Errore nel caricamento.",
+      saveError: "Errore nel salvataggio.",
       mon: "Lun",
       tue: "Mar",
       wed: "Mer",
@@ -252,6 +340,10 @@
       lunch: "Lunch",
       dinner: "Dinner",
       export: "Export",
+      chooseRecipe: "Choose a recipe",
+      loading: "Loading...",
+      loadError: "Error loading recipes.",
+      saveError: "Error saving meal.",
       mon: "Mon",
       tue: "Tue",
       wed: "Wed",
@@ -305,8 +397,6 @@
     });
   });
 
-  let currentWeek = new Date();
-
   function getMonday(date) {
     const d = new Date(date);
 
@@ -321,6 +411,16 @@
     return d;
   }
 
+  function formatISO(date) {
+    const year = date.getFullYear();
+    const month =
+      String(date.getMonth() + 1).padStart(2, "0");
+    const day =
+      String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
   function formatWeek() {
     const monday = getMonday(currentWeek);
 
@@ -333,13 +433,15 @@
     const startDay = monday.getDate();
     const endDay = sunday.getDate();
 
-    const startMonth = monday.toLocaleDateString(locale, {
-      month: "long"
-    });
+    const startMonth =
+      monday.toLocaleDateString(locale, {
+        month: "long"
+      });
 
-    const endMonth = sunday.toLocaleDateString(locale, {
-      month: "long"
-    });
+    const endMonth =
+      sunday.toLocaleDateString(locale, {
+        month: "long"
+      });
 
     let weekText;
 
@@ -354,7 +456,9 @@
         `${startDay} ${startMonth} – ${endDay} ${endMonth}`;
     }
 
-    if (monday.getFullYear() !== sunday.getFullYear()) {
+    if (
+      monday.getFullYear() !== sunday.getFullYear()
+    ) {
       weekText =
         `${startDay} ${startMonth} ${monday.getFullYear()} – ` +
         `${endDay} ${endMonth} ${sunday.getFullYear()}`;
@@ -365,8 +469,11 @@
   }
 
   function renderCalendar() {
-    const grid = document.getElementById("meal-grid");
-    const monday = getMonday(currentWeek);
+    const grid =
+      document.getElementById("meal-grid");
+
+    const monday =
+      getMonday(currentWeek);
 
     const dayKeys = [
       "mon",
@@ -380,27 +487,31 @@
 
     let html = `
       <div class="cell header-cell"></div>
+
       <div class="cell header-cell">
         ${translations[currentLanguage].lunch}
       </div>
+
       <div class="cell header-cell">
         ${translations[currentLanguage].dinner}
       </div>
     `;
 
     for (let i = 0; i < 7; i++) {
-      const date = new Date(monday);
-      date.setDate(monday.getDate() + i);
+      const date =
+        new Date(monday);
 
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
+      date.setDate(
+        monday.getDate() + i
+      );
 
-      const isoDate = `${year}-${month}-${day}`;
+      const isoDate =
+        formatISO(date);
 
       html += `
         <div class="cell day-cell">
-          ${translations[currentLanguage][dayKeys[i]]} ${date.getDate()}
+          ${translations[currentLanguage][dayKeys[i]]}
+          ${date.getDate()}
         </div>
 
         <div
@@ -420,29 +531,313 @@
     }
 
     grid.innerHTML = html;
+
+    document
+      .querySelectorAll(".meal-cell")
+      .forEach(cell => {
+        cell.addEventListener("click", () => {
+          openRecipeModal(
+            cell.dataset.date,
+            cell.dataset.meal
+          );
+        });
+      });
+  }
+
+  async function openRecipeModal(date, meal) {
+    selectedDate = date;
+    selectedMeal = meal;
+
+    const modal =
+      document.getElementById("recipe-modal");
+
+    const list =
+      document.getElementById("recipe-list");
+
+    const title =
+      document.getElementById("modal-title");
+
+    title.textContent =
+      translations[currentLanguage].chooseRecipe;
+
+    modal.classList.remove("hidden");
+
+    list.innerHTML =
+      translations[currentLanguage].loading;
+
+    const { data: recipes, error } =
+      await supabaseClient
+        .from("recipes")
+        .select("id, title, title_en")
+        .order("title", {
+          ascending: true
+        });
+
+    if (error) {
+      console.error(error);
+
+      list.innerHTML =
+        translations[currentLanguage].loadError;
+
+      return;
+    }
+
+    list.innerHTML =
+      recipes.map(recipe => {
+        const displayTitle =
+          currentLanguage === "en" &&
+          recipe.title_en
+            ? recipe.title_en
+            : recipe.title;
+
+        return `
+          <button
+            type="button"
+            class="recipe-choice"
+            data-id="${recipe.id}">
+            ${displayTitle || "—"}
+          </button>
+        `;
+      }).join("");
+
+    document
+      .querySelectorAll(".recipe-choice")
+      .forEach(button => {
+        button.addEventListener(
+          "click",
+          () => {
+            saveMeal(
+              button.dataset.id
+            );
+          }
+        );
+      });
+  }
+
+  async function saveMeal(recipeId) {
+    const { data: existing, error: findError } =
+      await supabaseClient
+        .from("meal_plan")
+        .select("id")
+        .eq("date", selectedDate)
+        .eq("meal_type", selectedMeal)
+        .maybeSingle();
+
+    if (findError) {
+      console.error(findError);
+
+      alert(
+        translations[currentLanguage].saveError
+      );
+
+      return;
+    }
+
+    let error;
+
+    if (existing) {
+      const result =
+        await supabaseClient
+          .from("meal_plan")
+          .update({
+            recipe_id:
+              Number(recipeId)
+          })
+          .eq(
+            "id",
+            existing.id
+          );
+
+      error = result.error;
+
+    } else {
+      const result =
+        await supabaseClient
+          .from("meal_plan")
+          .insert({
+            date: selectedDate,
+            meal_type: selectedMeal,
+            recipe_id:
+              Number(recipeId)
+          });
+
+      error = result.error;
+    }
+
+    if (error) {
+      console.error(error);
+
+      alert(
+        translations[currentLanguage].saveError
+      );
+
+      return;
+    }
+
+    document
+      .getElementById("recipe-modal")
+      .classList.add("hidden");
+
+    await loadMealPlan();
+  }
+
+  async function loadMealPlan() {
+    const monday =
+      getMonday(currentWeek);
+
+    const sunday =
+      new Date(monday);
+
+    sunday.setDate(
+      monday.getDate() + 6
+    );
+
+    const { data: meals, error } =
+      await supabaseClient
+        .from("meal_plan")
+        .select(`
+          date,
+          meal_type,
+          recipe_id
+        `)
+        .gte(
+          "date",
+          formatISO(monday)
+        )
+        .lte(
+          "date",
+          formatISO(sunday)
+        );
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    if (!meals || meals.length === 0) {
+      return;
+    }
+
+    const recipeIds =
+      [...new Set(
+        meals.map(
+          meal => meal.recipe_id
+        )
+      )];
+
+    const {
+      data: recipes,
+      error: recipeError
+    } =
+      await supabaseClient
+        .from("recipes")
+        .select(
+          "id, title, title_en"
+        )
+        .in(
+          "id",
+          recipeIds
+        );
+
+    if (recipeError) {
+      console.error(recipeError);
+      return;
+    }
+
+    const recipeMap =
+      new Map();
+
+    recipes.forEach(recipe => {
+      recipeMap.set(
+        recipe.id,
+        recipe
+      );
+    });
+
+    meals.forEach(meal => {
+      const cell =
+        document.querySelector(
+          `.meal-cell[data-date="${meal.date}"][data-meal="${meal.meal_type}"]`
+        );
+
+      const recipe =
+        recipeMap.get(
+          meal.recipe_id
+        );
+
+      if (!cell || !recipe) {
+        return;
+      }
+
+      const displayTitle =
+        currentLanguage === "en" &&
+        recipe.title_en
+          ? recipe.title_en
+          : recipe.title;
+
+      cell.innerHTML = `
+        <div class="meal-name">
+          ${displayTitle || "—"}
+        </div>
+      `;
+    });
   }
 
   document
     .getElementById("prev-week")
-    .addEventListener("click", () => {
-      currentWeek.setDate(currentWeek.getDate() - 7);
+    .addEventListener("click", async () => {
+      currentWeek.setDate(
+        currentWeek.getDate() - 7
+      );
+
       formatWeek();
       renderCalendar();
+      await loadMealPlan();
     });
 
   document
     .getElementById("next-week")
-    .addEventListener("click", () => {
-      currentWeek.setDate(currentWeek.getDate() + 7);
+    .addEventListener("click", async () => {
+      currentWeek.setDate(
+        currentWeek.getDate() + 7
+      );
+
       formatWeek();
       renderCalendar();
+      await loadMealPlan();
     });
 
-  const currentLanguage = getLanguage();
-  setLanguage(currentLanguage);
+  document
+    .getElementById("close-modal")
+    .addEventListener("click", () => {
+      document
+        .getElementById("recipe-modal")
+        .classList.add("hidden");
+    });
+
+  document
+    .getElementById("recipe-modal")
+    .addEventListener("click", event => {
+      if (
+        event.target.id ===
+        "recipe-modal"
+      ) {
+        document
+          .getElementById("recipe-modal")
+          .classList.add("hidden");
+      }
+    });
+
+  const currentLanguage =
+    getLanguage();
+
+  setLanguage(
+    currentLanguage
+  );
 
   formatWeek();
   renderCalendar();
+  loadMealPlan();
 </script>
 
 </body>
