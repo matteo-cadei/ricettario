@@ -191,14 +191,14 @@
 <body>
 
 <header>
-  <a class="back" href="index.html">← Ricette</a>
+  <a class="back" href="index.html" data-i18n="back">← Ricette</a>
 
   <div class="logo">A Tavola</div>
 
   <div class="language-switch">
-    <button class="lang-btn active">IT</button>
+    <button class="lang-btn" data-lang="it">IT</button>
     <span>|</span>
-    <button class="lang-btn">EN</button>
+    <button class="lang-btn" data-lang="en">EN</button>
   </div>
 </header>
 
@@ -208,11 +208,18 @@
 
     <div class="week-navigation">
       <button type="button">←</button>
-      <div class="week-title">17–23 agosto</div>
+
+      <div class="week-title">
+        17–23 agosto
+      </div>
+
       <button type="button">→</button>
     </div>
 
-    <button type="button" class="export-button">
+    <button
+      type="button"
+      class="export-button"
+      data-i18n="export">
       Esporta
     </button>
 
@@ -221,10 +228,10 @@
   <div class="meal-grid">
 
     <div class="cell header-cell"></div>
-    <div class="cell header-cell">Pranzo</div>
-    <div class="cell header-cell">Cena</div>
+    <div class="cell header-cell" data-i18n="lunch">Pranzo</div>
+    <div class="cell header-cell" data-i18n="dinner">Cena</div>
 
-    <div class="cell day-cell">Lun</div>
+    <div class="cell day-cell" data-i18n="mon">Lun</div>
     <div class="cell meal-cell">
       <div class="meal-name">Pasta al pesto</div>
     </div>
@@ -232,7 +239,7 @@
       <span class="empty">＋</span>
     </div>
 
-    <div class="cell day-cell">Mar</div>
+    <div class="cell day-cell" data-i18n="tue">Mar</div>
     <div class="cell meal-cell">
       <span class="empty">＋</span>
     </div>
@@ -240,7 +247,7 @@
       <div class="meal-name">Maiale alle prugne</div>
     </div>
 
-    <div class="cell day-cell">Mer</div>
+    <div class="cell day-cell" data-i18n="wed">Mer</div>
     <div class="cell meal-cell">
       <div class="meal-name">Risotto ai funghi</div>
     </div>
@@ -248,7 +255,7 @@
       <div class="meal-name">Curry di verdure</div>
     </div>
 
-    <div class="cell day-cell">Gio</div>
+    <div class="cell day-cell" data-i18n="thu">Gio</div>
     <div class="cell meal-cell">
       <span class="empty">＋</span>
     </div>
@@ -256,7 +263,7 @@
       <span class="empty">＋</span>
     </div>
 
-    <div class="cell day-cell">Ven</div>
+    <div class="cell day-cell" data-i18n="fri">Ven</div>
     <div class="cell meal-cell">
       <div class="meal-name">Pasta alle melanzane</div>
     </div>
@@ -264,7 +271,7 @@
       <div class="meal-name">Pesce al forno</div>
     </div>
 
-    <div class="cell day-cell">Sab</div>
+    <div class="cell day-cell" data-i18n="sat">Sab</div>
     <div class="cell meal-cell">
       <span class="empty">＋</span>
     </div>
@@ -272,7 +279,7 @@
       <div class="meal-name">Pizza fatta in casa</div>
     </div>
 
-    <div class="cell day-cell">Dom</div>
+    <div class="cell day-cell" data-i18n="sun">Dom</div>
     <div class="cell meal-cell">
       <div class="meal-name">Lasagne</div>
     </div>
@@ -283,6 +290,84 @@
   </div>
 
 </main>
+
+<script>
+  const translations = {
+    it: {
+      back: "← Ricette",
+      lunch: "Pranzo",
+      dinner: "Cena",
+      export: "Esporta",
+      mon: "Lun",
+      tue: "Mar",
+      wed: "Mer",
+      thu: "Gio",
+      fri: "Ven",
+      sat: "Sab",
+      sun: "Dom"
+    },
+
+    en: {
+      back: "← Recipes",
+      lunch: "Lunch",
+      dinner: "Dinner",
+      export: "Export",
+      mon: "Mon",
+      tue: "Tue",
+      wed: "Wed",
+      thu: "Thu",
+      fri: "Fri",
+      sat: "Sat",
+      sun: "Sun"
+    }
+  };
+
+  function getLanguage() {
+    const params = new URLSearchParams(window.location.search);
+    const urlLang = params.get("lang");
+
+    if (urlLang === "it" || urlLang === "en") {
+      localStorage.setItem("language", urlLang);
+      return urlLang;
+    }
+
+    return localStorage.getItem("language") || "it";
+  }
+
+  function setLanguage(lang) {
+    localStorage.setItem("language", lang);
+    document.documentElement.lang = lang;
+
+    document.querySelectorAll("[data-i18n]").forEach(element => {
+      const key = element.dataset.i18n;
+
+      if (translations[lang][key]) {
+        element.textContent = translations[lang][key];
+      }
+    });
+
+    document.querySelectorAll(".lang-btn").forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.lang === lang
+      );
+    });
+  }
+
+  document.querySelectorAll(".lang-btn").forEach(button => {
+    button.addEventListener("click", () => {
+      const lang = button.dataset.lang;
+
+      const params = new URLSearchParams(window.location.search);
+      params.set("lang", lang);
+
+      window.location.search = params.toString();
+    });
+  });
+
+  const currentLanguage = getLanguage();
+  setLanguage(currentLanguage);
+</script>
 
 </body>
 </html>
