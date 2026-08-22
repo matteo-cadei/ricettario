@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aggiungi ricetta</title>
+  <title>Modifica ricetta</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * {
@@ -141,7 +141,7 @@
 
 <main>
 
-  <h1>Aggiungi ricetta</h1>
+  <h1>Modifica ricetta</h1>
 
   <form>
 
@@ -206,12 +206,13 @@
         <button type="button">Annulla</button>
       </a>
 
-      <button type="submit" class="save">Salva ricetta</button>
+      <button type="submit" class="save">Salva modifiche</button>
     </div>
 
   </form>
 
 </main>
+  
 <script>
   const SUPABASE_URL = "https://qhrthaaqsgeyqsnaefhb.supabase.co";
   const SUPABASE_KEY = "sb_publishable_4jxAO_hOISps1tGhsoiBXA_EW5azn92";
@@ -222,6 +223,41 @@
   );
 
   const form = document.querySelector("form");
+
+  const params = new URLSearchParams(window.location.search);
+  const recipeId = params.get("id");
+
+  let currentImageUrl = null;
+
+  async function loadRecipe() {
+    if (!recipeId) {
+      alert("ID ricetta mancante.");
+      window.location.href = "index.html";
+      return;
+    }
+
+    const { data: recipe, error } = await supabaseClient
+      .from("recipes")
+      .select("*")
+      .eq("id", recipeId)
+      .single();
+
+    if (error || !recipe) {
+      console.error(error);
+      alert("Errore nel caricamento della ricetta.");
+      return;
+    }
+
+    document.getElementById("title").value = recipe.title || "";
+    document.getElementById("category").value = recipe.category || "Altro";
+    document.getElementById("servings").value = recipe.servings || "";
+    document.getElementById("time").value = recipe.time || "";
+    document.getElementById("made_by").value = recipe.made_by || "";
+    document.getElementById("ingredients").value = recipe.ingredients || "";
+    document.getElementById("instructions").value = recipe.instructions || "";
+
+    currentImageUrl = recipe.image_url || null;
+  }
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -241,12 +277,11 @@
     }
 
     try {
-      let imageUrl = null;
+      let imageUrl = currentImageUrl;
 
       if (imageFile) {
         const fileExtension = imageFile.name.split(".").pop();
-        const fileName =
-          crypto.randomUUID() + "." + fileExtension;
+        const fileName = crypto.randomUUID() + "." + fileExtension;
 
         const { error: uploadError } = await supabaseClient
           .storage
@@ -265,9 +300,9 @@
         imageUrl = publicUrlData.publicUrl;
       }
 
-      const { error: insertError } = await supabaseClient
+      const { error: updateError } = await supabaseClient
         .from("recipes")
-        .insert({
+        .update({
           title: title,
           category: category,
           servings: servings ? Number(servings) : null,
@@ -276,20 +311,23 @@
           ingredients: ingredients || null,
           instructions: instructions || null,
           image_url: imageUrl
-        });
+        })
+        .eq("id", recipeId);
 
-      if (insertError) {
-        throw insertError;
+      if (updateError) {
+        throw updateError;
       }
 
-      alert("Ricetta salvata!");
-      window.location.href = "index.html";
+      alert("Modifiche salvate!");
+      window.location.href = `recipe.html?id=${recipeId}`;
 
     } catch (error) {
       console.error(error);
       alert("Errore: " + error.message);
     }
   });
+
+  loadRecipe();
 </script>
 </body>
 </html>
