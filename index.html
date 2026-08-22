@@ -155,41 +155,60 @@
       <button class="category">Dolci</button>
     </div>
 
-    <div class="recipe-grid">
-
-      <div class="recipe-card">
-        <img class="recipe-image" src="https://images.unsplash.com/photo-1551183053-bf91a1d81141" alt="Pasta">
-        <div class="recipe-title">Pasta con melanzane e feta</div>
-      </div>
-
-     <a href="recipe.html" class="recipe-card" style="text-decoration:none; color:inherit;">
-      <img class="recipe-image" src="https://images.unsplash.com/photo-1547592180-85f173990554" alt="Carne">
-      <div class="recipe-title">Maiale alle prugne</div>
-    </a>
-
-      <div class="recipe-card">
-        <img class="recipe-image" src="https://images.unsplash.com/photo-1565958011703-44f9829ba187" alt="Torta">
-        <div class="recipe-title">Tarte tatin di barbabietola</div>
-      </div>
-
-      <div class="recipe-card">
-        <img class="recipe-image" src="https://images.unsplash.com/photo-1601050690597-df0568f70950" alt="Curry">
-        <div class="recipe-title">Curry di verdure</div>
-      </div>
-
-      <div class="recipe-card">
-        <img class="recipe-image" src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38" alt="Pizza">
-        <div class="recipe-title">Pizza fatta in casa</div>
-      </div>
-
-      <div class="recipe-card">
-        <img class="recipe-image" src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601" alt="Risotto">
-        <div class="recipe-title">Risotto ai funghi</div>
-      </div>
-
-    </div>
+    <div class="recipe-grid" id="recipe-grid"></div>
 
   </main>
+<script>
+  const SUPABASE_URL = "https://qhrthaaqsgeyqsnaefhb.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_4jxAO_hOISps1tGhsoiBXA_EW5azn92";
 
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  async function loadRecipes() {
+    const grid = document.getElementById("recipe-grid");
+
+    const { data: recipes, error } = await supabaseClient
+      .from("recipes")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      grid.innerHTML = "<p>Errore nel caricamento delle ricette.</p>";
+      return;
+    }
+
+    if (!recipes || recipes.length === 0) {
+      grid.innerHTML = "<p>Non ci sono ancora ricette.</p>";
+      return;
+    }
+
+    grid.innerHTML = recipes.map(recipe => {
+      const image = recipe.image_url
+        ? recipe.image_url
+        : "https://placehold.co/600x450?text=Ricetta";
+
+      return `
+        <a
+          href="recipe.html?id=${recipe.id}"
+          class="recipe-card"
+          style="text-decoration:none; color:inherit;"
+        >
+          <img
+            class="recipe-image"
+            src="${image}"
+            alt="${recipe.title}"
+          >
+          <div class="recipe-title">${recipe.title}</div>
+        </a>
+      `;
+    }).join("");
+  }
+
+  loadRecipes();
+</script>
 </body>
 </html>
