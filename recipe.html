@@ -40,6 +40,19 @@
       font-size: 13px;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .edit-link {
+      color: #1f1f1f;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
     main {
       max-width: 1000px;
       margin: 0 auto;
@@ -147,7 +160,11 @@
 
 <header>
   <a class="back" href="index.html">← Ricette</a>
-  <div class="language">IT &nbsp;|&nbsp; EN</div>
+
+  <div class="header-actions">
+    <a id="edit-link" class="edit-link" href="#">Modifica</a>
+    <div class="language">IT &nbsp;|&nbsp; EN</div>
+  </div>
 </header>
 
 <main id="recipe-container">
@@ -175,6 +192,8 @@
     const params = new URLSearchParams(window.location.search);
     const recipeId = params.get("id");
 
+    document.getElementById("edit-link").href =
+      `edit.html?id=${recipeId}`;
 
     if (!recipeId) {
 
