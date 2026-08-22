@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>A Tavola — Calendario</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f7f6f2;
+      color: #1f1f1f;
+    }
+
+    header {
+      height: 64px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 0 24px;
+      border-bottom: 1px solid #dedbd3;
+      background: #f7f6f2;
+    }
+
+    .back {
+      justify-self: start;
+      color: #1f1f1f;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .logo {
+      justify-self: center;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .language-switch {
+      justify-self: end;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .lang-btn {
+      border: none;
+      background: transparent;
+      padding: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #888;
+    }
+
+    .lang-btn.active {
+      color: #1f1f1f;
+      font-weight: 700;
+    }
+
+    main {
+      max-width: 1050px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+    }
+
+    .calendar-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .week-navigation {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .week-title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    button {
+      border: 1px solid #d6d2c9;
+      background: white;
+      border-radius: 8px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .export-button {
+      background: #1f1f1f;
+      color: white;
+      border-color: #1f1f1f;
+    }
+
+    .meal-grid {
+      display: grid;
+      grid-template-columns: 90px 1fr 1fr;
+      border-top: 1px solid #dedbd3;
+      border-left: 1px solid #dedbd3;
+    }
+
+    .cell {
+      min-width: 0;
+      min-height: 64px;
+      padding: 10px 12px;
+      border-right: 1px solid #dedbd3;
+      border-bottom: 1px solid #dedbd3;
+      background: #f7f6f2;
+    }
+
+    .cell.header-cell {
+      min-height: auto;
+      font-size: 12px;
+      font-weight: 700;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .day-cell {
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+    }
+
+    .meal-cell {
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .meal-cell:hover {
+      background: #efede7;
+    }
+
+    .meal-name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .empty {
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    @media (max-width: 650px) {
+      header {
+        height: 56px;
+        padding: 0 16px;
+      }
+
+      main {
+        padding: 20px 12px 40px;
+      }
+
+      .week-title {
+        font-size: 18px;
+      }
+
+      .calendar-top {
+        align-items: flex-start;
+      }
+
+      .meal-grid {
+        grid-template-columns: 64px 1fr 1fr;
+      }
+
+      .cell {
+        padding: 9px 8px;
+        min-height: 58px;
+      }
+
+      .meal-name {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <a class="back" href="index.html">← Ricette</a>
+
+  <div class="logo">A Tavola</div>
+
+  <div class="language-switch">
+    <button class="lang-btn active">IT</button>
+    <span>|</span>
+    <button class="lang-btn">EN</button>
+  </div>
+</header>
+
+<main>
+
+  <div class="calendar-top">
+
+    <div class="week-navigation">
+      <button type="button">←</button>
+      <div class="week-title">17–23 agosto</div>
+      <button type="button">→</button>
+    </div>
+
+    <button type="button" class="export-button">
+      Esporta
+    </button>
+
+  </div>
+
+  <div class="meal-grid">
+
+    <div class="cell header-cell"></div>
+    <div class="cell header-cell">Pranzo</div>
+    <div class="cell header-cell">Cena</div>
+
+    <div class="cell day-cell">Lun</div>
+    <div class="cell meal-cell">
+      <div class="meal-name">Pasta al pesto</div>
+    </div>
+    <div class="cell meal-cell">
+      <span class="empty">＋</span>
+    </div>
+
+    <div class="cell day-cell">Mar</div>
+    <div class="cell meal-cell">
+      <span class="empty">＋</span>
+    </div>
+    <div class="cell meal-cell">
+      <div class="meal-name">Maiale alle prugne</div>
+    </div>
+
+    <div class="cell day-cell">Mer</div>
+    <div class="cell meal-cell">
+      <div class="meal-name">Risotto ai funghi</div>
+    </div>
+    <div class="cell meal-cell">
+      <div class="meal-name">Curry di verdure</div>
+    </div>
+
+    <div class="cell day-cell">Gio</div>
+    <div class="cell meal-cell">
+      <span class="empty">＋</span>
+    </div>
+    <div class="cell meal-cell">
+      <span class="empty">＋</span>
+    </div>
+
+    <div class="cell day-cell">Ven</div>
+    <div class="cell meal-cell">
+      <div class="meal-name">Pasta alle melanzane</div>
+    </div>
+    <div class="cell meal-cell">
+      <div class="meal-name">Pesce al forno</div>
+    </div>
+
+    <div class="cell day-cell">Sab</div>
+    <div class="cell meal-cell">
+      <span class="empty">＋</span>
+    </div>
+    <div class="cell meal-cell">
+      <div class="meal-name">Pizza fatta in casa</div>
+    </div>
+
+    <div class="cell day-cell">Dom</div>
+    <div class="cell meal-cell">
+      <div class="meal-name">Lasagne</div>
+    </div>
+    <div class="cell meal-cell">
+      <span class="empty">＋</span>
+    </div>
+
+  </div>
+
+</main>
+
+</body>
+</html>
