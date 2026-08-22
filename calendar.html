@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="it">
-  
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>A Tavola — Calendario</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     * {
@@ -156,6 +156,94 @@
       font-size: 14px;
     }
 
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal.hidden {
+      display: none;
+    }
+
+    .modal-content {
+      width: 100%;
+      max-width: 420px;
+      max-height: 70vh;
+      overflow-y: auto;
+      background: #f7f6f2;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    #close-modal {
+      border: none;
+      background: transparent;
+      font-size: 22px;
+      padding: 4px 8px;
+    }
+
+    .custom-meal {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .custom-meal input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid #dedbd3;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: white;
+      font: inherit;
+    }
+
+    .recipe-section-title {
+      margin: 14px 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .recipe-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .recipe-choice {
+      width: 100%;
+      text-align: left;
+      background: white;
+      border: 1px solid #dedbd3;
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    .recipe-choice:hover {
+      background: #efede7;
+    }
+
+    .remove-meal {
+      margin-top: 14px;
+    }
+
     @media (max-width: 650px) {
       header {
         height: 56px;
@@ -186,65 +274,6 @@
       .meal-name {
         font-size: 13px;
       }
-
-      .modal {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.35);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-        z-index: 100;
-      }
-      
-      .modal.hidden {
-        display: none;
-      }
-      
-      .modal-content {
-        width: 100%;
-        max-width: 420px;
-        max-height: 70vh;
-        overflow-y: auto;
-        background: #f7f6f2;
-        border-radius: 12px;
-        padding: 16px;
-      }
-      
-      .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 14px;
-      }
-      
-      #close-modal {
-        border: none;
-        background: transparent;
-        font-size: 22px;
-        padding: 4px 8px;
-      }
-      
-      .recipe-list {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      
-      .recipe-choice {
-        width: 100%;
-        text-align: left;
-        background: white;
-        border: 1px solid #dedbd3;
-        border-radius: 8px;
-        padding: 10px 12px;
-        cursor: pointer;
-      }
-      
-      .recipe-choice:hover {
-        background: #efede7;
-      }
     }
   </style>
 </head>
@@ -269,9 +298,7 @@
 
     <div class="week-navigation">
       <button type="button" id="prev-week">←</button>
-    
       <div class="week-title" id="week-title"></div>
-    
       <button type="button" id="next-week">→</button>
     </div>
 
@@ -288,19 +315,19 @@
 
 </main>
 
-  <div id="recipe-modal" class="modal hidden">
-    <div class="modal-content">
-  
-      <div class="modal-header">
-        <strong id="modal-title">Scegli una ricetta</strong>
-        <button type="button" id="close-modal">×</button>
-      </div>
-  
-      <div id="recipe-list" class="recipe-list"></div>
-  
+<div id="recipe-modal" class="modal hidden">
+  <div class="modal-content">
+
+    <div class="modal-header">
+      <strong id="modal-title">Scegli un pasto</strong>
+      <button type="button" id="close-modal">×</button>
     </div>
+
+    <div id="recipe-list" class="recipe-list"></div>
+
   </div>
-  
+</div>
+
 <script>
   const SUPABASE_URL = "https://qhrthaaqsgeyqsnaefhb.supabase.co";
   const SUPABASE_KEY = "sb_publishable_4jxAO_hOISps1tGhsoiBXA_EW5azn92";
@@ -321,7 +348,10 @@
       lunch: "Pranzo",
       dinner: "Cena",
       export: "Esporta",
-      chooseRecipe: "Scegli una ricetta",
+      chooseRecipe: "Scegli un pasto",
+      customPlaceholder: "Scrivi un pasto...",
+      addCustom: "Aggiungi",
+      myRecipes: "Le mie ricette",
       removeMeal: "Rimuovi pasto",
       loading: "Caricamento...",
       loadError: "Errore nel caricamento.",
@@ -341,7 +371,10 @@
       lunch: "Lunch",
       dinner: "Dinner",
       export: "Export",
-      chooseRecipe: "Choose a recipe",
+      chooseRecipe: "Choose a meal",
+      customPlaceholder: "Write a meal...",
+      addCustom: "Add",
+      myRecipes: "My recipes",
       removeMeal: "Remove meal",
       loading: "Loading...",
       loadError: "Error loading recipes.",
@@ -401,7 +434,6 @@
 
   function getMonday(date) {
     const d = new Date(date);
-
     const day = d.getDay();
 
     const difference =
@@ -451,16 +483,12 @@
       monday.getMonth() === sunday.getMonth() &&
       monday.getFullYear() === sunday.getFullYear()
     ) {
-      weekText =
-        `${startDay}–${endDay} ${endMonth}`;
+      weekText = `${startDay}–${endDay} ${endMonth}`;
     } else {
-      weekText =
-        `${startDay} ${startMonth} – ${endDay} ${endMonth}`;
+      weekText = `${startDay} ${startMonth} – ${endDay} ${endMonth}`;
     }
 
-    if (
-      monday.getFullYear() !== sunday.getFullYear()
-    ) {
+    if (monday.getFullYear() !== sunday.getFullYear()) {
       weekText =
         `${startDay} ${startMonth} ${monday.getFullYear()} – ` +
         `${endDay} ${endMonth} ${sunday.getFullYear()}`;
@@ -471,11 +499,8 @@
   }
 
   function renderCalendar() {
-    const grid =
-      document.getElementById("meal-grid");
-
-    const monday =
-      getMonday(currentWeek);
+    const grid = document.getElementById("meal-grid");
+    const monday = getMonday(currentWeek);
 
     const dayKeys = [
       "mon",
@@ -500,15 +525,10 @@
     `;
 
     for (let i = 0; i < 7; i++) {
-      const date =
-        new Date(monday);
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
 
-      date.setDate(
-        monday.getDate() + i
-      );
-
-      const isoDate =
-        formatISO(date);
+      const isoDate = formatISO(date);
 
       html += `
         <div class="cell day-cell">
@@ -550,56 +570,23 @@
     selectedDate = date;
     selectedMeal = meal;
 
-    const modal =
-      document.getElementById("recipe-modal");
-
-    const list =
-      document.getElementById("recipe-list");
-
-    const title =
-      document.getElementById("modal-title");
+    const modal = document.getElementById("recipe-modal");
+    const list = document.getElementById("recipe-list");
+    const title = document.getElementById("modal-title");
 
     title.textContent =
       translations[currentLanguage].chooseRecipe;
 
     modal.classList.remove("hidden");
 
-    const removeButton = `
-      <button
-        type="button"
-        class="recipe-choice remove-meal"
-        id="remove-meal">
-        ${translations[currentLanguage].removeMeal}
-      </button>
-    `;
-    
-    const recipeButtons =
-      recipes.map(recipe => {
-        const displayTitle =
-          currentLanguage === "en" && recipe.title_en
-            ? recipe.title_en
-            : recipe.title;
-    
-        return `
-          <button
-            type="button"
-            class="recipe-choice"
-            data-id="${recipe.id}">
-            ${displayTitle || "—"}
-          </button>
-        `;
-      }).join("");
-    
     list.innerHTML =
-      removeButton + recipeButtons;
+      translations[currentLanguage].loading;
 
     const { data: recipes, error } =
       await supabaseClient
         .from("recipes")
         .select("id, title, title_en")
-        .order("title", {
-          ascending: true
-        });
+        .order("title", { ascending: true });
 
     if (error) {
       console.error(error);
@@ -610,11 +597,10 @@
       return;
     }
 
-    list.innerHTML =
+    const recipeButtons =
       recipes.map(recipe => {
         const displayTitle =
-          currentLanguage === "en" &&
-          recipe.title_en
+          currentLanguage === "en" && recipe.title_en
             ? recipe.title_en
             : recipe.title;
 
@@ -628,43 +614,70 @@
         `;
       }).join("");
 
+    list.innerHTML = `
+      <div class="custom-meal">
+        <input
+          type="text"
+          id="custom-meal-input"
+          placeholder="${translations[currentLanguage].customPlaceholder}"
+        >
+
+        <button type="button" id="save-custom-meal">
+          ${translations[currentLanguage].addCustom}
+        </button>
+      </div>
+
+      <div class="recipe-section-title">
+        ${translations[currentLanguage].myRecipes}
+      </div>
+
+      ${recipeButtons}
+
+      <button
+        type="button"
+        class="recipe-choice remove-meal"
+        id="remove-meal">
+        ${translations[currentLanguage].removeMeal}
+      </button>
+    `;
+
     document
-      .querySelectorAll(".recipe-choice")
+      .querySelectorAll(".recipe-choice[data-id]")
       .forEach(button => {
-        button.addEventListener(
-          "click",
-          () => {
-            saveMeal(
-              button.dataset.id
-            );
-          }
-        );
+        button.addEventListener("click", () => {
+          saveMeal(button.dataset.id);
+        });
       });
-    
+
+    document
+      .getElementById("save-custom-meal")
+      .addEventListener("click", () => {
+        const text =
+          document
+            .getElementById("custom-meal-input")
+            .value
+            .trim();
+
+        if (text) {
+          saveCustomMeal(text);
+        }
+      });
+
+    document
+      .getElementById("custom-meal-input")
+      .addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+          const text = event.target.value.trim();
+
+          if (text) {
+            saveCustomMeal(text);
+          }
+        }
+      });
+
     document
       .getElementById("remove-meal")
       .addEventListener("click", removeMeal);
-  }
-
-  async function removeMeal() {
-    const { error } = await supabaseClient
-      .from("meal_plan")
-      .delete()
-      .eq("date", selectedDate)
-      .eq("meal_type", selectedMeal);
-  
-    if (error) {
-      console.error(error);
-      alert(translations[currentLanguage].saveError);
-      return;
-    }
-  
-    document
-      .getElementById("recipe-modal")
-      .classList.add("hidden");
-  
-    renderCalendar();
-    await loadMealPlan();
   }
 
   async function saveMeal(recipeId) {
@@ -678,11 +691,7 @@
 
     if (findError) {
       console.error(findError);
-
-      alert(
-        translations[currentLanguage].saveError
-      );
-
+      alert(translations[currentLanguage].saveError);
       return;
     }
 
@@ -693,13 +702,10 @@
         await supabaseClient
           .from("meal_plan")
           .update({
-            recipe_id:
-              Number(recipeId)
+            recipe_id: Number(recipeId),
+            custom_text: null
           })
-          .eq(
-            "id",
-            existing.id
-          );
+          .eq("id", existing.id);
 
       error = result.error;
 
@@ -710,8 +716,8 @@
           .insert({
             date: selectedDate,
             meal_type: selectedMeal,
-            recipe_id:
-              Number(recipeId)
+            recipe_id: Number(recipeId),
+            custom_text: null
           });
 
       error = result.error;
@@ -719,11 +725,7 @@
 
     if (error) {
       console.error(error);
-
-      alert(
-        translations[currentLanguage].saveError
-      );
-
+      alert(translations[currentLanguage].saveError);
       return;
     }
 
@@ -731,19 +733,94 @@
       .getElementById("recipe-modal")
       .classList.add("hidden");
 
+    renderCalendar();
+    await loadMealPlan();
+  }
+
+  async function saveCustomMeal(text) {
+    const { data: existing, error: findError } =
+      await supabaseClient
+        .from("meal_plan")
+        .select("id")
+        .eq("date", selectedDate)
+        .eq("meal_type", selectedMeal)
+        .maybeSingle();
+
+    if (findError) {
+      console.error(findError);
+      alert(translations[currentLanguage].saveError);
+      return;
+    }
+
+    let error;
+
+    if (existing) {
+      const result =
+        await supabaseClient
+          .from("meal_plan")
+          .update({
+            recipe_id: null,
+            custom_text: text
+          })
+          .eq("id", existing.id);
+
+      error = result.error;
+
+    } else {
+      const result =
+        await supabaseClient
+          .from("meal_plan")
+          .insert({
+            date: selectedDate,
+            meal_type: selectedMeal,
+            recipe_id: null,
+            custom_text: text
+          });
+
+      error = result.error;
+    }
+
+    if (error) {
+      console.error(error);
+      alert(translations[currentLanguage].saveError);
+      return;
+    }
+
+    document
+      .getElementById("recipe-modal")
+      .classList.add("hidden");
+
+    renderCalendar();
+    await loadMealPlan();
+  }
+
+  async function removeMeal() {
+    const { error } =
+      await supabaseClient
+        .from("meal_plan")
+        .delete()
+        .eq("date", selectedDate)
+        .eq("meal_type", selectedMeal);
+
+    if (error) {
+      console.error(error);
+      alert(translations[currentLanguage].saveError);
+      return;
+    }
+
+    document
+      .getElementById("recipe-modal")
+      .classList.add("hidden");
+
+    renderCalendar();
     await loadMealPlan();
   }
 
   async function loadMealPlan() {
-    const monday =
-      getMonday(currentWeek);
+    const monday = getMonday(currentWeek);
 
-    const sunday =
-      new Date(monday);
-
-    sunday.setDate(
-      monday.getDate() + 6
-    );
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
 
     const { data: meals, error } =
       await supabaseClient
@@ -751,16 +828,11 @@
         .select(`
           date,
           meal_type,
-          recipe_id
+          recipe_id,
+          custom_text
         `)
-        .gte(
-          "date",
-          formatISO(monday)
-        )
-        .lte(
-          "date",
-          formatISO(sunday)
-        );
+        .gte("date", formatISO(monday))
+        .lte("date", formatISO(sunday));
 
     if (error) {
       console.error(error);
@@ -773,38 +845,35 @@
 
     const recipeIds =
       [...new Set(
-        meals.map(
-          meal => meal.recipe_id
-        )
+        meals
+          .filter(meal => meal.recipe_id !== null)
+          .map(meal => meal.recipe_id)
       )];
 
-    const {
-      data: recipes,
-      error: recipeError
-    } =
-      await supabaseClient
-        .from("recipes")
-        .select(
-          "id, title, title_en"
-        )
-        .in(
-          "id",
-          recipeIds
-        );
+    let recipes = [];
 
-    if (recipeError) {
-      console.error(recipeError);
-      return;
+    if (recipeIds.length > 0) {
+      const {
+        data,
+        error: recipeError
+      } =
+        await supabaseClient
+          .from("recipes")
+          .select("id, title, title_en")
+          .in("id", recipeIds);
+
+      if (recipeError) {
+        console.error(recipeError);
+        return;
+      }
+
+      recipes = data || [];
     }
 
-    const recipeMap =
-      new Map();
+    const recipeMap = new Map();
 
     recipes.forEach(recipe => {
-      recipeMap.set(
-        recipe.id,
-        recipe
-      );
+      recipeMap.set(recipe.id, recipe);
     });
 
     meals.forEach(meal => {
@@ -813,18 +882,29 @@
           `.meal-cell[data-date="${meal.date}"][data-meal="${meal.meal_type}"]`
         );
 
-      const recipe =
-        recipeMap.get(
-          meal.recipe_id
-        );
+      if (!cell) {
+        return;
+      }
 
-      if (!cell || !recipe) {
+      if (meal.custom_text) {
+        cell.innerHTML = `
+          <div class="meal-name">
+            ${meal.custom_text}
+          </div>
+        `;
+
+        return;
+      }
+
+      const recipe =
+        recipeMap.get(meal.recipe_id);
+
+      if (!recipe) {
         return;
       }
 
       const displayTitle =
-        currentLanguage === "en" &&
-        recipe.title_en
+        currentLanguage === "en" && recipe.title_en
           ? recipe.title_en
           : recipe.title;
 
@@ -871,10 +951,7 @@
   document
     .getElementById("recipe-modal")
     .addEventListener("click", event => {
-      if (
-        event.target.id ===
-        "recipe-modal"
-      ) {
+      if (event.target.id === "recipe-modal") {
         document
           .getElementById("recipe-modal")
           .classList.add("hidden");
@@ -884,9 +961,7 @@
   const currentLanguage =
     getLanguage();
 
-  setLanguage(
-    currentLanguage
-  );
+  setLanguage(currentLanguage);
 
   formatWeek();
   renderCalendar();
