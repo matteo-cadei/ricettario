@@ -207,13 +207,11 @@
   <div class="calendar-top">
 
     <div class="week-navigation">
-      <button type="button">←</button>
-
-      <div class="week-title">
-        17–23 agosto
-      </div>
-
-      <button type="button">→</button>
+      <button type="button" id="prev-week">←</button>
+    
+      <div class="week-title" id="week-title"></div>
+    
+      <button type="button" id="next-week">→</button>
     </div>
 
     <button
@@ -367,8 +365,85 @@
     });
   });
 
+  let currentWeek = new Date();
+
+  function getMonday(date) {
+    const d = new Date(date);
+  
+    const day = d.getDay();
+  
+    const difference =
+      d.getDate() - day + (day === 0 ? -6 : 1);
+  
+    d.setDate(difference);
+    d.setHours(0, 0, 0, 0);
+  
+    return d;
+  }
+  
+  function formatWeek() {
+    const monday = getMonday(currentWeek);
+  
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+  
+    const locale =
+      currentLanguage === "en" ? "en-GB" : "it-IT";
+  
+    const startDay = monday.getDate();
+    const endDay = sunday.getDate();
+  
+    const startMonth = monday.toLocaleDateString(locale, {
+      month: "long"
+    });
+  
+    const endMonth = sunday.toLocaleDateString(locale, {
+      month: "long"
+    });
+  
+    const year = sunday.getFullYear();
+  
+    let weekText;
+  
+    if (
+      monday.getMonth() === sunday.getMonth() &&
+      monday.getFullYear() === sunday.getFullYear()
+    ) {
+      weekText =
+        `${startDay}–${endDay} ${endMonth}`;
+    } else {
+      weekText =
+        `${startDay} ${startMonth} – ${endDay} ${endMonth}`;
+    }
+  
+    if (monday.getFullYear() !== sunday.getFullYear()) {
+      weekText =
+        `${startDay} ${startMonth} ${monday.getFullYear()} – ` +
+        `${endDay} ${endMonth} ${sunday.getFullYear()}`;
+    }
+  
+    document.getElementById("week-title").textContent =
+      weekText;
+  }
+  
+  document
+    .getElementById("prev-week")
+    .addEventListener("click", () => {
+      currentWeek.setDate(currentWeek.getDate() - 7);
+      formatWeek();
+    });
+  
+  document
+    .getElementById("next-week")
+    .addEventListener("click", () => {
+      currentWeek.setDate(currentWeek.getDate() + 7);
+      formatWeek();
+    });
+
   const currentLanguage = getLanguage();
   setLanguage(currentLanguage);
+  
+  formatWeek();
 </script>
 
 </body>
