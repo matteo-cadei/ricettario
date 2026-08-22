@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="it">
+<script defer src="https://umami-omega-ochre-70.vercel.app/script.js" data-website-id="4356a40f-3a0d-4917-aaaf-c462703ec9fa"></script>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -48,7 +49,27 @@
       grid-template-columns: 1fr 1fr;
       gap: 18px;
     }
-
+    
+    .language-switch {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+    
+    .lang-btn {
+      border: none;
+      background: transparent;
+      padding: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #888;
+    }
+    
+    .lang-btn.active {
+      color: #1f1f1f;
+      font-weight: 700;
+    }
     .field {
       display: flex;
       flex-direction: column;
@@ -136,24 +157,30 @@
 <body>
 
 <header>
-  <a href="index.html" class="back">← Ricette</a>
+  <a href="index.html" class="back" data-i18n="back">← Ricette</a>
+
+  <div class="language-switch">
+    <button type="button" class="lang-btn" data-lang="it">IT</button>
+    <span>|</span>
+    <button type="button" class="lang-btn" data-lang="en">EN</button>
+  </div>
 </header>
 
 <main>
 
-  <h1>Modifica ricetta</h1>
+  <h1 data-i18n="pageTitle">Modifica ricetta</h1>
 
   <form>
 
     <div class="form-grid">
 
       <div class="field full">
-        <label for="title">Titolo</label>
+        <label for="title" data-i18n="title">Titolo</label>
         <input id="title" type="text" placeholder="Es. Maiale alle prugne">
       </div>
 
       <div class="field">
-        <label for="category">Categoria</label>
+        <label for="category" data-i18n="category">Categoria</label>
         <select id="category">
           <option>Primi</option>
           <option>Secondi</option>
@@ -164,27 +191,27 @@
       </div>
 
       <div class="field">
-        <label for="servings">Porzioni</label>
+        <label for="servings" data-i18n="servings">Porzioni</label>
         <input id="servings" type="number" min="1" placeholder="4">
       </div>
 
       <div class="field">
-        <label for="time">Tempo</label>
+        <label for="time" data-i18n="time">Tempo</label>
         <input id="time" type="text" placeholder="45 min">
       </div>
 
       <div class="field">
-        <label for="made_by">Fatto da</label>
+        <label for="made_by" data-i18n="madeBy">Fatto da</label>
         <input id="made_by" type="text" placeholder="Es. Matteo">
       </div>
 
       <div class="field">
-        <label for="image">Immagine</label>
+        <label for="image" data-i18n="image">Immagine</label>
         <input id="image" type="file" accept="image/*">
       </div>
 
       <div class="field full">
-        <label for="ingredients">Ingredienti</label>
+        <label for="ingredients" data-i18n="ingredients">Ingredienti</label>
         <textarea
           id="ingredients"
           placeholder="600 g filetto di maiale&#10;6 prugne&#10;1 cucchiaio di miele&#10;..."
@@ -192,7 +219,7 @@
       </div>
 
       <div class="field full">
-        <label for="instructions">Preparazione</label>
+        <label for="instructions" data-i18n="instructions">Preparazione</label>
         <textarea
           id="instructions"
           placeholder="1. Rosola il filetto...&#10;&#10;2. Aggiungi le prugne...&#10;&#10;3. Continua la cottura..."
@@ -203,16 +230,15 @@
 
     <div class="actions">
       <a href="index.html">
-        <button type="button">Annulla</button>
+        <button type="button" data-i18n="cancel">Annulla</button>
       </a>
 
-      <button type="submit" class="save">Salva modifiche</button>
+      <button type="submit" class="save" data-i18n="save">Salva modifiche</button>
     </div>
 
   </form>
 
 </main>
-  
 <script>
   const SUPABASE_URL = "https://qhrthaaqsgeyqsnaefhb.supabase.co";
   const SUPABASE_KEY = "sb_publishable_4jxAO_hOISps1tGhsoiBXA_EW5azn92";
@@ -224,6 +250,94 @@
 
   const form = document.querySelector("form");
 
+  const translations = {
+    it: {
+      back: "← Ricette",
+      pageTitle: "Modifica ricetta",
+      title: "Titolo",
+      category: "Categoria",
+      servings: "Porzioni",
+      time: "Tempo",
+      madeBy: "Fatto da",
+      image: "Immagine",
+      ingredients: "Ingredienti",
+      instructions: "Preparazione",
+      cancel: "Annulla",
+      save: "Salva modifiche",
+      missingId: "ID ricetta mancante.",
+      loadError: "Errore nel caricamento della ricetta.",
+      titleRequired: "Inserisci il titolo della ricetta.",
+      saved: "Modifiche salvate!",
+      error: "Errore"
+    },
+
+    en: {
+      back: "← Recipes",
+      pageTitle: "Edit recipe",
+      title: "Title",
+      category: "Category",
+      servings: "Servings",
+      time: "Time",
+      madeBy: "Made by",
+      image: "Image",
+      ingredients: "Ingredients",
+      instructions: "Instructions",
+      cancel: "Cancel",
+      save: "Save changes",
+      missingId: "Recipe ID missing.",
+      loadError: "Error loading recipe.",
+      titleRequired: "Enter the recipe title.",
+      saved: "Changes saved!",
+      error: "Error"
+    }
+  };
+
+  function getLanguage() {
+    const params = new URLSearchParams(window.location.search);
+    const urlLang = params.get("lang");
+
+    if (urlLang === "it" || urlLang === "en") {
+      localStorage.setItem("language", urlLang);
+      return urlLang;
+    }
+
+    return localStorage.getItem("language") || "it";
+  }
+
+  function setLanguage(lang) {
+    localStorage.setItem("language", lang);
+    document.documentElement.lang = lang;
+
+    document.querySelectorAll("[data-i18n]").forEach(element => {
+      const key = element.dataset.i18n;
+
+      if (translations[lang][key]) {
+        element.textContent = translations[lang][key];
+      }
+    });
+
+    document.querySelectorAll(".lang-btn").forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.lang === lang
+      );
+    });
+  }
+
+  document.querySelectorAll(".lang-btn").forEach(button => {
+    button.addEventListener("click", () => {
+      const lang = button.dataset.lang;
+
+      const params = new URLSearchParams(window.location.search);
+      params.set("lang", lang);
+
+      window.location.search = params.toString();
+    });
+  });
+
+  const currentLanguage = getLanguage();
+  setLanguage(currentLanguage);
+
   const params = new URLSearchParams(window.location.search);
   const recipeId = params.get("id");
 
@@ -231,7 +345,7 @@
 
   async function loadRecipe() {
     if (!recipeId) {
-      alert("ID ricetta mancante.");
+      alert(translations[currentLanguage].missingId);
       window.location.href = "index.html";
       return;
     }
@@ -244,7 +358,7 @@
 
     if (error || !recipe) {
       console.error(error);
-      alert("Errore nel caricamento della ricetta.");
+      alert(translations[currentLanguage].loadError);
       return;
     }
 
@@ -272,7 +386,7 @@
     const imageFile = document.getElementById("image").files[0];
 
     if (!title) {
-      alert("Inserisci il titolo della ricetta.");
+      alert(translations[currentLanguage].titleRequired);
       return;
     }
 
@@ -281,7 +395,8 @@
 
       if (imageFile) {
         const fileExtension = imageFile.name.split(".").pop();
-        const fileName = crypto.randomUUID() + "." + fileExtension;
+        const fileName =
+          crypto.randomUUID() + "." + fileExtension;
 
         const { error: uploadError } = await supabaseClient
           .storage
@@ -318,16 +433,21 @@
         throw updateError;
       }
 
-      alert("Modifiche salvate!");
-      window.location.href = `recipe.html?id=${recipeId}`;
+      alert(translations[currentLanguage].saved);
+
+      window.location.href =
+        `recipe.html?id=${recipeId}&lang=${currentLanguage}`;
 
     } catch (error) {
       console.error(error);
-      alert("Errore: " + error.message);
+
+      alert(
+        translations[currentLanguage].error +
+        ": " +
+        error.message
+      );
     }
   });
 
   loadRecipe();
 </script>
-</body>
-</html>
