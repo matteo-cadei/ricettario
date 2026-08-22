@@ -309,19 +309,34 @@
       return;
     }
 
+    const displayTitle =
+      currentLanguage === "en" && recipe.title_en
+        ? recipe.title_en
+        : recipe.title;
 
-    document.title = recipe.title;
+    const displayIngredients =
+      currentLanguage === "en" && recipe.ingredients_en
+        ? recipe.ingredients_en
+        : recipe.ingredients;
+    
+    const displayInstructions =
+      currentLanguage === "en" && recipe.instructions_en
+        ? recipe.instructions_en
+        : recipe.instructions;
 
 
-    const ingredients = recipe.ingredients
-      ? recipe.ingredients
+    document.title = displayTitle;
+
+
+    const ingredients = displayIngredients
+      ? displayIngredients
           .split("\n")
           .filter(item => item.trim() !== "")
       : [];
 
 
-    const instructions = recipe.instructions
-      ? recipe.instructions
+    const instructions = displayInstructions
+      ? displayInstructions
           .split("\n")
           .filter(item => item.trim() !== "")
       : [];
@@ -362,7 +377,7 @@
         <img
           class="recipe-image"
           src="${recipe.image_url}"
-          alt="${recipe.title}"
+          alt="${displayTitle}"
         >
       `
       : `
@@ -372,7 +387,7 @@
 
     container.innerHTML = `
 
-      <h1>${recipe.title}</h1>
+      <h1>${displayTitle}</h1>
 
       <div class="meta">
         ${meta.join(" · ")}
