@@ -39,7 +39,26 @@
     .language {
       font-size: 13px;
     }
+    .language-switch {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+     }
 
+    .lang-btn {
+      border: none;
+      background: transparent;
+      padding: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #888;
+    }
+    
+    .lang-btn.active {
+      color: #1f1f1f;
+      font-weight: 700;
+    }
     .header-actions {
       display: flex;
       align-items: center;
@@ -163,7 +182,11 @@
 
   <div class="header-actions">
     <a id="edit-link" class="edit-link" href="#">Modifica</a>
-    <div class="language">IT &nbsp;|&nbsp; EN</div>
+    <div class="language-switch">
+      <button class="lang-btn" data-lang="it">IT</button>
+      <span>|</span>
+      <button class="lang-btn" data-lang="en">EN</button>
+    </div>
   </div>
 </header>
 
@@ -184,7 +207,70 @@
     SUPABASE_KEY
   );
 
-
+  const translations = {
+    it: {
+      back: "← Ricette",
+      edit: "Modifica",
+      ingredients: "INGREDIENTI",
+      instructions: "PREPARAZIONE",
+      people: "persone",
+      madeBy: "Fatto da"
+    },
+  
+    en: {
+      back: "← Recipes",
+      edit: "Edit",
+      ingredients: "INGREDIENTS",
+      instructions: "INSTRUCTIONS",
+      people: "people",
+      madeBy: "Made by"
+    }
+  };
+  
+  function getLanguage() {
+    const params = new URLSearchParams(window.location.search);
+    const urlLang = params.get("lang");
+  
+    if (urlLang === "it" || urlLang === "en") {
+      localStorage.setItem("language", urlLang);
+      return urlLang;
+    }
+  
+    return localStorage.getItem("language") || "it";
+  }
+  
+  function setLanguage(lang) {
+    localStorage.setItem("language", lang);
+    document.documentElement.lang = lang;
+  
+    document.querySelector(".back").textContent =
+      translations[lang].back;
+  
+    document.getElementById("edit-link").textContent =
+      translations[lang].edit;
+  
+    document.querySelectorAll(".lang-btn").forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.lang === lang
+      );
+    });
+  }
+  
+  document.querySelectorAll(".lang-btn").forEach(button => {
+    button.addEventListener("click", () => {
+      const lang = button.dataset.lang;
+  
+      const params = new URLSearchParams(window.location.search);
+      params.set("lang", lang);
+  
+      window.location.search = params.toString();
+    });
+  });
+  
+  const currentLanguage = getLanguage();
+  setLanguage(currentLanguage);
+  
   async function loadRecipe() {
 
     const container = document.getElementById("recipe-container");
@@ -248,11 +334,15 @@
     }
 
     if (recipe.servings) {
-      meta.push(recipe.servings + " persone");
+      meta.push(
+        recipe.servings + " " + translations[currentLanguage].people
+      );
     }
 
     if (recipe.made_by) {
-      meta.push("Fatto da " + recipe.made_by);
+      meta.push(
+        translations[currentLanguage].madeBy + " " + recipe.made_by
+      );
     }
 
     if (recipe.created_at) {
@@ -295,7 +385,7 @@
 
         <div>
 
-          <h2>INGREDIENTI</h2>
+          <h2>${translations[currentLanguage].ingredients}</h2>
 
           <ul class="ingredients">
 
@@ -312,7 +402,7 @@
 
       <div class="preparation">
 
-        <h2>PREPARAZIONE</h2>
+        <h2>${translations[currentLanguage].instructions}</h2>
 
         ${instructions.map((step, index) => `
 
