@@ -322,6 +322,7 @@
       dinner: "Cena",
       export: "Esporta",
       chooseRecipe: "Scegli una ricetta",
+      removeMeal: "Rimuovi pasto",
       loading: "Caricamento...",
       loadError: "Errore nel caricamento.",
       saveError: "Errore nel salvataggio.",
@@ -341,6 +342,7 @@
       dinner: "Dinner",
       export: "Export",
       chooseRecipe: "Choose a recipe",
+      removeMeal: "Remove meal",
       loading: "Loading...",
       loadError: "Error loading recipes.",
       saveError: "Error saving meal.",
@@ -562,8 +564,34 @@
 
     modal.classList.remove("hidden");
 
+    const removeButton = `
+      <button
+        type="button"
+        class="recipe-choice remove-meal"
+        id="remove-meal">
+        ${translations[currentLanguage].removeMeal}
+      </button>
+    `;
+    
+    const recipeButtons =
+      recipes.map(recipe => {
+        const displayTitle =
+          currentLanguage === "en" && recipe.title_en
+            ? recipe.title_en
+            : recipe.title;
+    
+        return `
+          <button
+            type="button"
+            class="recipe-choice"
+            data-id="${recipe.id}">
+            ${displayTitle || "—"}
+          </button>
+        `;
+      }).join("");
+    
     list.innerHTML =
-      translations[currentLanguage].loading;
+      removeButton + recipeButtons;
 
     const { data: recipes, error } =
       await supabaseClient
@@ -612,6 +640,31 @@
           }
         );
       });
+    
+    document
+      .getElementById("remove-meal")
+      .addEventListener("click", removeMeal);
+  }
+
+  async function removeMeal() {
+    const { error } = await supabaseClient
+      .from("meal_plan")
+      .delete()
+      .eq("date", selectedDate)
+      .eq("meal_type", selectedMeal);
+  
+    if (error) {
+      console.error(error);
+      alert(translations[currentLanguage].saveError);
+      return;
+    }
+  
+    document
+      .getElementById("recipe-modal")
+      .classList.add("hidden");
+  
+    renderCalendar();
+    await loadMealPlan();
   }
 
   async function saveMeal(recipeId) {
