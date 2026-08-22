@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Maiale alle prugne</title>
+  <title>Ricetta</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     * {
@@ -66,6 +69,7 @@
       aspect-ratio: 4 / 3;
       object-fit: cover;
       border-radius: 12px;
+      background: #dedbd3;
     }
 
     h2 {
@@ -103,6 +107,15 @@
       color: #888;
     }
 
+    .loading {
+      color: #777;
+      font-size: 14px;
+    }
+
+    .error {
+      color: #8b2e2e;
+    }
+
     @media (max-width: 650px) {
 
       header {
@@ -137,75 +150,166 @@
   <div class="language">IT &nbsp;|&nbsp; EN</div>
 </header>
 
-<main>
+<main id="recipe-container">
 
-  <h1>Maiale alle prugne</h1>
-
-  <div class="meta">
-    45 min · 4 persone
-  </div>
-
-  <div class="recipe-top">
-
-    <img
-      class="recipe-image"
-      src="https://images.unsplash.com/photo-1547592180-85f173990554"
-      alt="Maiale alle prugne"
-    >
-
-    <div>
-
-      <h2>INGREDIENTI</h2>
-
-      <ul class="ingredients">
-        <li>600 g filetto di maiale</li>
-        <li>6 prugne</li>
-        <li>1 cucchiaio di miele</li>
-        <li>2 cucchiai di aceto balsamico</li>
-        <li>1 cipolla piccola</li>
-        <li>Olio extravergine d'oliva</li>
-        <li>Sale e pepe</li>
-      </ul>
-
-    </div>
-
-  </div>
-
-  <div class="preparation">
-
-    <h2>PREPARAZIONE</h2>
-
-    <div class="step">
-      <div class="step-number">1</div>
-      <div>
-        Taglia il filetto di maiale e rosolalo in padella con un filo d'olio.
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-number">2</div>
-      <div>
-        Aggiungi la cipolla e lasciala appassire.
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-number">3</div>
-      <div>
-        Aggiungi le prugne, il miele e l'aceto balsamico.
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-number">4</div>
-      <div>
-        Continua la cottura fino a ottenere una salsa leggermente densa.
-      </div>
-    </div>
-
-  </div>
+  <div class="loading">Caricamento ricetta...</div>
 
 </main>
+
+
+<script>
+
+  const SUPABASE_URL = "https://qhrthaaqsgeyqsnaefhb.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_4jxAO_hOISps1tGhsoiBXA_EW5azn92";
+
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+  async function loadRecipe() {
+
+    const container = document.getElementById("recipe-container");
+
+    const params = new URLSearchParams(window.location.search);
+    const recipeId = params.get("id");
+
+
+    if (!recipeId) {
+
+      container.innerHTML = `
+        <p class="error">Ricetta non trovata.</p>
+      `;
+
+      return;
+    }
+
+
+    const { data: recipe, error } = await supabaseClient
+      .from("recipes")
+      .select("*")
+      .eq("id", recipeId)
+      .single();
+
+
+    if (error || !recipe) {
+
+      console.error(error);
+
+      container.innerHTML = `
+        <p class="error">Errore nel caricamento della ricetta.</p>
+      `;
+
+      return;
+    }
+
+
+    document.title = recipe.title;
+
+
+    const ingredients = recipe.ingredients
+      ? recipe.ingredients
+          .split("\n")
+          .filter(item => item.trim() !== "")
+      : [];
+
+
+    const instructions = recipe.instructions
+      ? recipe.instructions
+          .split("\n")
+          .filter(item => item.trim() !== "")
+      : [];
+
+
+    let meta = [];
+
+    if (recipe.time) {
+      meta.push(recipe.time);
+    }
+
+    if (recipe.servings) {
+      meta.push(recipe.servings + " persone");
+    }
+
+    if (recipe.made_by) {
+      meta.push("Fatto da " + recipe.made_by);
+    }
+
+
+    const imageHTML = recipe.image_url
+      ? `
+        <img
+          class="recipe-image"
+          src="${recipe.image_url}"
+          alt="${recipe.title}"
+        >
+      `
+      : `
+        <div class="recipe-image"></div>
+      `;
+
+
+    container.innerHTML = `
+
+      <h1>${recipe.title}</h1>
+
+      <div class="meta">
+        ${meta.join(" · ")}
+      </div>
+
+
+      <div class="recipe-top">
+
+        ${imageHTML}
+
+        <div>
+
+          <h2>INGREDIENTI</h2>
+
+          <ul class="ingredients">
+
+            ${ingredients.map(item => `
+              <li>${item}</li>
+            `).join("")}
+
+          </ul>
+
+        </div>
+
+      </div>
+
+
+      <div class="preparation">
+
+        <h2>PREPARAZIONE</h2>
+
+        ${instructions.map((step, index) => `
+
+          <div class="step">
+
+            <div class="step-number">
+              ${index + 1}
+            </div>
+
+            <div>
+              ${step.replace(/^\d+[\.\)]\s*/, "")}
+            </div>
+
+          </div>
+
+        `).join("")}
+
+      </div>
+
+    `;
+
+  }
+
+
+  loadRecipe();
+
+</script>
 
 </body>
 </html>
