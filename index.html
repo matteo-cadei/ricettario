@@ -40,6 +40,27 @@
       gap: 10px;
     }
 
+    .language-switch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+  .lang-btn {
+    border: none;
+    background: transparent;
+    padding: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #888;
+  }
+  
+  .lang-btn.active {
+    color: #1f1f1f;
+    font-weight: 700;
+  }
+  
     button {
       border: 0;
       background: white;
@@ -135,25 +156,32 @@
 <body>
 
   <header>
-    <div class="logo">Ricettario</div>
-
     <div class="header-actions">
-      <button>⌕</button>
-      <a href="new.html">
-        <button class="add-button">＋</button>
-      </a>
-    </div>
+
+  <div class="language-switch">
+    <button class="lang-btn" data-lang="it">IT</button>
+    <span>|</span>
+    <button class="lang-btn" data-lang="en">EN</button>
+  </div>
+
+  <button>⌕</button>
+
+  <a href="new.html">
+    <button class="add-button">＋</button>
+  </a>
+
+</div>
   </header>
 
   <main>
 
     <div class="categories">
-      <button class="category active">Tutte</button>
-      <button class="category">Primi</button>
-      <button class="category">Secondi</button>
-      <button class="category">Contorni</button>
-      <button class="category">Dolci</button>
-    </div>
+      <button class="category active" data-i18n="all">Tutte</button>
+      <button class="category" data-i18n="first">Primi</button>
+      <button class="category" data-i18n="second">Secondi</button>
+      <button class="category" data-i18n="sides">Contorni</button>
+      <button class="category" data-i18n="desserts">Dolci</button>
+</div>
 
     <div class="recipe-grid" id="recipe-grid"></div>
 
@@ -207,7 +235,58 @@
       `;
     }).join("");
   }
-
+  const translations = {
+    it: {
+      all: "Tutte",
+      first: "Primi",
+      second: "Secondi",
+      sides: "Contorni",
+      desserts: "Dolci"
+    },
+  
+    en: {
+      all: "All",
+      first: "First courses",
+      second: "Main courses",
+      sides: "Side dishes",
+      desserts: "Desserts"
+    }
+  };
+  
+  function setLanguage(lang) {
+  
+    localStorage.setItem("language", lang);
+  
+    document.documentElement.lang = lang;
+  
+    document.querySelectorAll("[data-i18n]").forEach(element => {
+      const key = element.dataset.i18n;
+  
+      if (translations[lang][key]) {
+        element.textContent = translations[lang][key];
+      }
+    });
+  
+    document.querySelectorAll(".lang-btn").forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.lang === lang
+      );
+    });
+  }
+  
+  document.querySelectorAll(".lang-btn").forEach(button => {
+  
+    button.addEventListener("click", () => {
+      setLanguage(button.dataset.lang);
+    });
+  
+  });
+  
+  const savedLanguage =
+    localStorage.getItem("language") || "it";
+  
+  setLanguage(savedLanguage);
   loadRecipes();
 </script>
 </body>
