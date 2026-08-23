@@ -537,36 +537,6 @@
           publicUrlData.publicUrl;
       }
 
-      /*
-        Creiamo anche la vecchia versione testuale
-        degli ingredienti, così recipe.html continua
-        a funzionare.
-      */
-
-      const ingredientsText =
-        ingredients
-          .map(ingredient => {
-            const quantity =
-              ingredient.quantity !== null
-                ? ingredient.quantity + " "
-                : "";
-
-            const unit =
-              ingredient.unit &&
-              ingredient.unit !== "q.b."
-                ? ingredient.unit + " "
-                : ingredient.unit === "q.b."
-                  ? "q.b. "
-                  : "";
-
-            return (
-              quantity +
-              unit +
-              ingredient.name
-            ).trim();
-          })
-          .join("\n");
-
       const recipeData = {
         category: category,
         servings:
@@ -582,9 +552,6 @@
         recipeData.title_en =
           title;
 
-        recipeData.ingredients_en =
-          ingredientsText || null;
-
         recipeData.instructions_en =
           instructions || null;
 
@@ -592,17 +559,10 @@
         recipeData.title =
           title;
 
-        recipeData.ingredients =
-          ingredientsText || null;
-
         recipeData.instructions =
           instructions || null;
       }
 
-      /*
-        Salviamo prima la ricetta e chiediamo
-        a Supabase di restituirci il suo ID.
-      */
 
       const {
         data: newRecipe,
