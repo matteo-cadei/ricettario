@@ -203,6 +203,33 @@
     SUPABASE_KEY
   );
 
+  const translations = {
+    it: {
+      logo: "A Tavola",
+      all: "Tutte",
+      first: "Primi",
+      second: "Secondi",
+      sides: "Contorni",
+      desserts: "Dolci",
+      loadError: "Errore nel caricamento delle ricette.",
+      noRecipes: "Non ci sono ancora ricette."
+    },
+
+    en: {
+      logo: "Our Table",
+      all: "All",
+      first: "First courses",
+      second: "Main courses",
+      sides: "Side dishes",
+      desserts: "Desserts",
+      loadError: "Error loading recipes.",
+      noRecipes: "There are no recipes yet."
+    }
+  };
+
+  let currentLanguage =
+    localStorage.getItem("language") || "it";
+
   async function loadRecipes() {
     const grid = document.getElementById("recipe-grid");
 
@@ -213,91 +240,83 @@
 
     if (error) {
       console.error(error);
-      grid.innerHTML = "<p>Errore nel caricamento delle ricette.</p>";
+
+      grid.innerHTML =
+        `<p>${translations[currentLanguage].loadError}</p>`;
+
       return;
     }
 
     if (!recipes || recipes.length === 0) {
-      grid.innerHTML = "<p>Non ci sono ancora ricette.</p>";
+      grid.innerHTML =
+        `<p>${translations[currentLanguage].noRecipes}</p>`;
+
       return;
     }
 
     grid.innerHTML = recipes.map(recipe => {
+
       const image = recipe.image_url
         ? recipe.image_url
         : "https://placehold.co/600x450?text=Ricetta";
 
+      const displayTitle =
+        currentLanguage === "en" && recipe.title_en
+          ? recipe.title_en
+          : recipe.title;
+
       return `
         <a
-          href="recipe.html?id=${recipe.id}"
+          href="recipe.html?id=${recipe.id}&lang=${currentLanguage}"
           class="recipe-card"
           style="text-decoration:none; color:inherit;"
         >
           <img
             class="recipe-image"
             src="${image}"
-            alt="${recipe.title}"
+            alt="${displayTitle}"
           >
-          <div class="recipe-title">${recipe.title}</div>
+
+          <div class="recipe-title">
+            ${displayTitle}
+          </div>
         </a>
       `;
     }).join("");
   }
-  const translations = {
-    it: {
-      logo: "A Tavola",
-      all: "Tutte",
-      first: "Primi",
-      second: "Secondi",
-      sides: "Contorni",
-      desserts: "Dolci"
-    },
-  
-    en: {
-      logo: "Our Table",
-      all: "All",
-      first: "First courses",
-      second: "Main courses",
-      sides: "Side dishes",
-      desserts: "Desserts"
-    }
-  };
-  
+
   function setLanguage(lang) {
-  
+    currentLanguage = lang;
+
     localStorage.setItem("language", lang);
-  
+
     document.documentElement.lang = lang;
-  
+
     document.querySelectorAll("[data-i18n]").forEach(element => {
       const key = element.dataset.i18n;
-  
+
       if (translations[lang][key]) {
         element.textContent = translations[lang][key];
       }
     });
-  
+
     document.querySelectorAll(".lang-btn").forEach(button => {
       button.classList.toggle(
         "active",
         button.dataset.lang === lang
       );
     });
+
+    loadRecipes();
   }
-  
+
   document.querySelectorAll(".lang-btn").forEach(button => {
-  
     button.addEventListener("click", () => {
       setLanguage(button.dataset.lang);
     });
-  
   });
-  
-  const savedLanguage =
-    localStorage.getItem("language") || "it";
-  
-  setLanguage(savedLanguage);
-  loadRecipes();
+
+  setLanguage(currentLanguage);
 </script>
 </body>
 </html>
