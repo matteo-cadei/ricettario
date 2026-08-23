@@ -294,8 +294,21 @@
       instructions: "Preparazione",
       cancel: "Annulla",
       save: "Salva ricetta",
+
       ingredient: "Ingrediente",
       addIngredient: "+ Aggiungi ingrediente",
+
+      categoryFirst: "Primi",
+      categorySecond: "Secondi",
+      categorySides: "Contorni",
+      categoryDesserts: "Dolci",
+      categoryOther: "Altro",
+
+      unitPiece: "pz",
+      unitTablespoon: "cucchiaio",
+      unitTeaspoon: "cucchiaino",
+      unitToTaste: "q.b.",
+
       titleRequired: "Inserisci il titolo della ricetta.",
       saved: "Ricetta salvata!",
       error: "Errore"
@@ -314,8 +327,21 @@
       instructions: "Instructions",
       cancel: "Cancel",
       save: "Save recipe",
+
       ingredient: "Ingredient",
       addIngredient: "+ Add ingredient",
+
+      categoryFirst: "First courses",
+      categorySecond: "Main courses",
+      categorySides: "Side dishes",
+      categoryDesserts: "Desserts",
+      categoryOther: "Other",
+
+      unitPiece: "pcs",
+      unitTablespoon: "tbsp",
+      unitTeaspoon: "tsp",
+      unitToTaste: "to taste",
+
       titleRequired: "Enter the recipe title.",
       saved: "Recipe saved!",
       error: "Error"
@@ -358,6 +384,51 @@
     if (addButton) {
       addButton.textContent =
         translations[lang].addIngredient;
+    }
+
+    const categorySelect =
+      document.getElementById("category");
+
+    if (categorySelect) {
+      const first =
+        categorySelect.querySelector('[value="first"]');
+
+      const second =
+        categorySelect.querySelector('[value="second"]');
+
+      const sides =
+        categorySelect.querySelector('[value="sides"]');
+
+      const desserts =
+        categorySelect.querySelector('[value="desserts"]');
+
+      const other =
+        categorySelect.querySelector('[value="other"]');
+
+      if (first) {
+        first.textContent =
+          translations[lang].categoryFirst;
+      }
+
+      if (second) {
+        second.textContent =
+          translations[lang].categorySecond;
+      }
+
+      if (sides) {
+        sides.textContent =
+          translations[lang].categorySides;
+      }
+
+      if (desserts) {
+        desserts.textContent =
+          translations[lang].categoryDesserts;
+      }
+
+      if (other) {
+        other.textContent =
+          translations[lang].categoryOther;
+      }
     }
   }
 
@@ -410,10 +481,18 @@
         <option value="kg">kg</option>
         <option value="ml">ml</option>
         <option value="l">l</option>
-        <option value="pz">pz</option>
-        <option value="cucchiaio">cucchiaio</option>
-        <option value="cucchiaino">cucchiaino</option>
-        <option value="q.b.">q.b.</option>
+        <option value="pcs">
+          ${translations[currentLanguage].unitPiece}
+        </option>
+        <option value="tbsp">
+          ${translations[currentLanguage].unitTablespoon}
+        </option>
+        <option value="tsp">
+          ${translations[currentLanguage].unitTeaspoon}
+        </option>
+        <option value="to_taste">
+          ${translations[currentLanguage].unitToTaste}
+        </option>
       </select>
 
       <button
@@ -563,7 +642,6 @@
           instructions || null;
       }
 
-
       const {
         data: newRecipe,
         error: insertError
@@ -578,18 +656,16 @@
         throw insertError;
       }
 
-      /*
-        Ora salviamo gli ingredienti strutturati
-        collegandoli alla nuova ricetta.
-      */
-
       if (ingredients.length > 0) {
         const ingredientData =
           ingredients.map(ingredient => {
             const data = {
-              recipe_id: newRecipe.id,
+              recipe_id:
+                newRecipe.id,
+
               quantity:
                 ingredient.quantity,
+
               unit:
                 ingredient.unit || null
             };
