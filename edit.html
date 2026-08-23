@@ -4,14 +4,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="A Tavola">
 
   <link rel="manifest" href="manifest.json">
   
-  <title>Modifica ricetta</title>
+  <title>Modifca ricetta</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * {
@@ -140,6 +140,22 @@
       border-color: #1f1f1f;
     }
 
+    .ingredient-row {
+      display: grid;
+      grid-template-columns: 1fr 110px 120px 42px;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .ingredient-row input,
+    .ingredient-row select {
+      width: 100%;
+    }
+    
+    .remove-ingredient {
+      padding: 8px;
+    }
+
     @media (max-width: 650px) {
       header {
         height: 56px;
@@ -157,6 +173,11 @@
       .field.full {
         grid-column: auto;
       }
+
+      .ingredient-row {
+      grid-template-columns: 1fr 80px 90px 42px;
+      }
+      
     }
   </style>
 </head>
@@ -188,12 +209,13 @@
 
       <div class="field">
         <label for="category" data-i18n="category">Categoria</label>
+      
         <select id="category">
-          <option>Primi</option>
-          <option>Secondi</option>
-          <option>Contorni</option>
-          <option>Dolci</option>
-          <option>Altro</option>
+          <option value="first">Primi</option>
+          <option value="second">Secondi</option>
+          <option value="sides">Contorni</option>
+          <option value="desserts">Dolci</option>
+          <option value="other">Altro</option>
         </select>
       </div>
 
@@ -218,11 +240,13 @@
       </div>
 
       <div class="field full">
-        <label for="ingredients" data-i18n="ingredients">Ingredienti</label>
-        <textarea
-          id="ingredients"
-          placeholder="600 g filetto di maiale&#10;6 prugne&#10;1 cucchiaio di miele&#10;..."
-        ></textarea>
+        <label data-i18n="ingredients">Ingredienti</label>
+      
+        <div id="ingredients-list"></div>
+      
+        <button type="button" id="add-ingredient">
+          + Aggiungi ingrediente
+        </button>
       </div>
 
       <div class="field full">
@@ -240,7 +264,7 @@
         <button type="button" data-i18n="cancel">Annulla</button>
       </a>
 
-      <button type="submit" class="save" data-i18n="save">Salva modifiche</button>
+      <button type="submit" class="save" data-i18n="save">Salva modifche</button>
     </div>
 
   </form>
@@ -271,9 +295,23 @@
       instructions: "Preparazione",
       cancel: "Annulla",
       save: "Salva modifiche",
-      missingId: "ID ricetta mancante.",
-      loadError: "Errore nel caricamento della ricetta.",
+
+      ingredient: "Ingrediente",
+      addIngredient: "+ Aggiungi ingrediente",
+
+      categoryFirst: "Primi",
+      categorySecond: "Secondi",
+      categorySides: "Contorni",
+      categoryDesserts: "Dolci",
+      categoryOther: "Altro",
+
+      unitPiece: "pz",
+      unitTablespoon: "cucchiaio",
+      unitTeaspoon: "cucchiaino",
+      unitToTaste: "q.b.",
+
       titleRequired: "Inserisci il titolo della ricetta.",
+      loadError: "Errore nel caricamento della ricetta.",
       saved: "Modifiche salvate!",
       error: "Errore"
     },
@@ -291,9 +329,23 @@
       instructions: "Instructions",
       cancel: "Cancel",
       save: "Save changes",
-      missingId: "Recipe ID missing.",
-      loadError: "Error loading recipe.",
+
+      ingredient: "Ingredient",
+      addIngredient: "+ Add ingredient",
+
+      categoryFirst: "First courses",
+      categorySecond: "Main courses",
+      categorySides: "Side dishes",
+      categoryDesserts: "Desserts",
+      categoryOther: "Other",
+
+      unitPiece: "pcs",
+      unitTablespoon: "tbsp",
+      unitTeaspoon: "tsp",
+      unitToTaste: "to taste",
+
       titleRequired: "Enter the recipe title.",
+      loadError: "Error loading recipe.",
       saved: "Changes saved!",
       error: "Error"
     }
@@ -329,16 +381,48 @@
         button.dataset.lang === lang
       );
     });
+
+    const addButton = document.getElementById("add-ingredient");
+
+    if (addButton) {
+      addButton.textContent =
+        translations[lang].addIngredient;
+    }
+
+    const categorySelect =
+      document.getElementById("category");
+
+    if (categorySelect) {
+      const labels = {
+        first: translations[lang].categoryFirst,
+        second: translations[lang].categorySecond,
+        sides: translations[lang].categorySides,
+        desserts: translations[lang].categoryDesserts,
+        other: translations[lang].categoryOther
+      };
+
+      Object.entries(labels).forEach(([value, text]) => {
+        const option =
+          categorySelect.querySelector(`[value="${value}"]`);
+
+        if (option) {
+          option.textContent = text;
+        }
+      });
+    }
   }
 
   document.querySelectorAll(".lang-btn").forEach(button => {
     button.addEventListener("click", () => {
       const lang = button.dataset.lang;
 
-      const params = new URLSearchParams(window.location.search);
+      const params =
+        new URLSearchParams(window.location.search);
+
       params.set("lang", lang);
 
-      window.location.search = params.toString();
+      window.location.search =
+        params.toString();
     });
   });
 
@@ -348,20 +432,95 @@
   const params = new URLSearchParams(window.location.search);
   const recipeId = params.get("id");
 
+  const ingredientsList =
+    document.getElementById("ingredients-list");
+
+  const addIngredientButton =
+    document.getElementById("add-ingredient");
+
   let currentImageUrl = null;
+
+  function addIngredientRow(
+    name = "",
+    quantity = "",
+    unit = "g"
+  ) {
+    const row =
+      document.createElement("div");
+
+    row.className = "ingredient-row";
+
+    row.innerHTML = `
+      <input
+        type="text"
+        class="ingredient-name"
+        placeholder="${translations[currentLanguage].ingredient}"
+        value="${name}"
+      >
+
+      <input
+        type="number"
+        class="ingredient-quantity"
+        step="any"
+        min="0"
+        placeholder="0"
+        value="${quantity}"
+      >
+
+      <select class="ingredient-unit">
+        <option value="g">g</option>
+        <option value="kg">kg</option>
+        <option value="ml">ml</option>
+        <option value="l">l</option>
+        <option value="pcs">
+          ${translations[currentLanguage].unitPiece}
+        </option>
+        <option value="tbsp">
+          ${translations[currentLanguage].unitTablespoon}
+        </option>
+        <option value="tsp">
+          ${translations[currentLanguage].unitTeaspoon}
+        </option>
+        <option value="to_taste">
+          ${translations[currentLanguage].unitToTaste}
+        </option>
+      </select>
+
+      <button
+        type="button"
+        class="remove-ingredient">
+        ×
+      </button>
+    `;
+
+    row.querySelector(".ingredient-unit").value = unit || "g";
+
+    row
+      .querySelector(".remove-ingredient")
+      .addEventListener("click", () => {
+        row.remove();
+      });
+
+    ingredientsList.appendChild(row);
+  }
+
+  addIngredientButton.addEventListener(
+    "click",
+    () => addIngredientRow()
+  );
 
   async function loadRecipe() {
     if (!recipeId) {
-      alert(translations[currentLanguage].missingId);
-      window.location.href = "index.html";
+      alert(translations[currentLanguage].loadError);
       return;
     }
 
-    const { data: recipe, error } = await supabaseClient
-      .from("recipes")
-      .select("*")
-      .eq("id", recipeId)
-      .single();
+    const { data: recipe, error } =
+      await supabaseClient
+        .from("recipes")
+        .select("*")
+        .eq("id", recipeId)
+        .single();
 
     if (error || !recipe) {
       console.error(error);
@@ -369,40 +528,142 @@
       return;
     }
 
+    const categoryMap = {
+      Primi: "first",
+      Secondi: "second",
+      Contorni: "sides",
+      Dolci: "desserts",
+      Altro: "other",
+      first: "first",
+      second: "second",
+      sides: "sides",
+      desserts: "desserts",
+      other: "other"
+    };
+
     document.getElementById("title").value =
       currentLanguage === "en"
         ? (recipe.title_en || "")
         : (recipe.title || "");
-    document.getElementById("category").value = recipe.category || "Altro";
-    document.getElementById("servings").value = recipe.servings || "";
-    document.getElementById("time").value = recipe.time || "";
-    document.getElementById("made_by").value = recipe.made_by || "";
-    document.getElementById("ingredients").value =
-      currentLanguage === "en"
-        ? (recipe.ingredients_en || "")
-        : (recipe.ingredients || "");
+
+    document.getElementById("category").value =
+      categoryMap[recipe.category] || "other";
+
+    document.getElementById("servings").value =
+      recipe.servings || "";
+
+    document.getElementById("time").value =
+      recipe.time || "";
+
+    document.getElementById("made_by").value =
+      recipe.made_by || "";
+
     document.getElementById("instructions").value =
       currentLanguage === "en"
         ? (recipe.instructions_en || "")
         : (recipe.instructions || "");
 
-    currentImageUrl = recipe.image_url || null;
+    currentImageUrl =
+      recipe.image_url || null;
+
+    const {
+      data: ingredientRows,
+      error: ingredientsError
+    } =
+      await supabaseClient
+        .from("recipe_ingredients")
+        .select("*")
+        .eq("recipe_id", recipeId)
+        .order("id", { ascending: true });
+
+    if (ingredientsError) {
+      console.error(ingredientsError);
+      return;
+    }
+
+    ingredientsList.innerHTML = "";
+
+    if (!ingredientRows || ingredientRows.length === 0) {
+      addIngredientRow();
+      return;
+    }
+
+    ingredientRows.forEach(ingredient => {
+      const name =
+        currentLanguage === "en"
+          ? (ingredient.name_en || ingredient.name || "")
+          : (ingredient.name || ingredient.name_en || "");
+
+      addIngredientRow(
+        name,
+        ingredient.quantity ?? "",
+        ingredient.unit || "g"
+      );
+    });
   }
 
-  form.addEventListener("submit", async (event) => {
+  form.addEventListener("submit", async event => {
     event.preventDefault();
 
-    const title = document.getElementById("title").value.trim();
-    const category = document.getElementById("category").value;
-    const servings = document.getElementById("servings").value;
-    const time = document.getElementById("time").value.trim();
-    const madeBy = document.getElementById("made_by").value.trim();
-    const ingredients = document.getElementById("ingredients").value.trim();
-    const instructions = document.getElementById("instructions").value.trim();
-    const imageFile = document.getElementById("image").files[0];
+    const title =
+      document.getElementById("title").value.trim();
+
+    const category =
+      document.getElementById("category").value;
+
+    const servings =
+      document.getElementById("servings").value;
+
+    const time =
+      document.getElementById("time").value.trim();
+
+    const madeBy =
+      document.getElementById("made_by").value.trim();
+
+    const instructions =
+      document.getElementById("instructions").value.trim();
+
+    const imageFile =
+      document.getElementById("image").files[0];
+
+    const ingredientRows =
+      document.querySelectorAll(".ingredient-row");
+
+    const ingredients = [];
+
+    ingredientRows.forEach(row => {
+      const name =
+        row
+          .querySelector(".ingredient-name")
+          .value
+          .trim();
+
+      const quantityValue =
+        row
+          .querySelector(".ingredient-quantity")
+          .value;
+
+      const unit =
+        row
+          .querySelector(".ingredient-unit")
+          .value;
+
+      if (name) {
+        ingredients.push({
+          name,
+          quantity:
+            quantityValue !== ""
+              ? Number(quantityValue)
+              : null,
+          unit
+        });
+      }
+    });
 
     if (!title) {
-      alert(translations[currentLanguage].titleRequired);
+      alert(
+        translations[currentLanguage].titleRequired
+      );
       return;
     }
 
@@ -410,55 +671,126 @@
       let imageUrl = currentImageUrl;
 
       if (imageFile) {
-        const fileExtension = imageFile.name.split(".").pop();
-        const fileName =
-          crypto.randomUUID() + "." + fileExtension;
+        const fileExtension =
+          imageFile.name.split(".").pop();
 
-        const { error: uploadError } = await supabaseClient
-          .storage
-          .from("recipe-images")
-          .upload(fileName, imageFile);
+        const fileName =
+          crypto.randomUUID() +
+          "." +
+          fileExtension;
+
+        const { error: uploadError } =
+          await supabaseClient
+            .storage
+            .from("recipe-images")
+            .upload(fileName, imageFile);
 
         if (uploadError) {
           throw uploadError;
         }
 
-        const { data: publicUrlData } = supabaseClient
-          .storage
-          .from("recipe-images")
-          .getPublicUrl(fileName);
+        const { data: publicUrlData } =
+          supabaseClient
+            .storage
+            .from("recipe-images")
+            .getPublicUrl(fileName);
 
-        imageUrl = publicUrlData.publicUrl;
+        imageUrl =
+          publicUrlData.publicUrl;
       }
 
       const recipeData = {
-        category: category,
-        servings: servings ? Number(servings) : null,
+        category,
+        servings:
+          servings
+            ? Number(servings)
+            : null,
         time: time || null,
         made_by: madeBy || null,
         image_url: imageUrl
       };
-      
+
       if (currentLanguage === "en") {
-        recipeData.title_en = title;
-        recipeData.ingredients_en = ingredients || null;
-        recipeData.instructions_en = instructions || null;
+        recipeData.title_en =
+          title;
+
+        recipeData.instructions_en =
+          instructions || null;
+
       } else {
-        recipeData.title = title;
-        recipeData.ingredients = ingredients || null;
-        recipeData.instructions = instructions || null;
+        recipeData.title =
+          title;
+
+        recipeData.instructions =
+          instructions || null;
       }
-      
-      const { error: updateError } = await supabaseClient
-        .from("recipes")
-        .update(recipeData)
-        .eq("id", recipeId);
+
+      const { error: updateError } =
+        await supabaseClient
+          .from("recipes")
+          .update(recipeData)
+          .eq("id", recipeId);
 
       if (updateError) {
         throw updateError;
       }
 
-      alert(translations[currentLanguage].saved);
+      /*
+        Strategia semplice:
+        eliminiamo gli ingredienti esistenti
+        e li ricreiamo con i valori modificati.
+      */
+
+      const { error: deleteError } =
+        await supabaseClient
+          .from("recipe_ingredients")
+          .delete()
+          .eq("recipe_id", recipeId);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      if (ingredients.length > 0) {
+        const ingredientData =
+          ingredients.map(ingredient => {
+            const data = {
+              recipe_id:
+                Number(recipeId),
+
+              quantity:
+                ingredient.quantity,
+
+              unit:
+                ingredient.unit || null
+            };
+
+            if (currentLanguage === "en") {
+              data.name_en =
+                ingredient.name;
+            } else {
+              data.name =
+                ingredient.name;
+            }
+
+            return data;
+          });
+
+        const {
+          error: ingredientsError
+        } =
+          await supabaseClient
+            .from("recipe_ingredients")
+            .insert(ingredientData);
+
+        if (ingredientsError) {
+          throw ingredientsError;
+        }
+      }
+
+      alert(
+        translations[currentLanguage].saved
+      );
 
       window.location.href =
         `recipe.html?id=${recipeId}&lang=${currentLanguage}`;
@@ -476,3 +808,5 @@
 
   loadRecipe();
 </script>
+</body>
+</html>
