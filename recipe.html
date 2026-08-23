@@ -315,6 +315,19 @@
       return;
     }
 
+    const {
+      data: ingredientRows,
+      error: ingredientsError
+    } = await supabaseClient
+      .from("recipe_ingredients")
+      .select("*")
+      .eq("recipe_id", recipeId)
+      .order("id", { ascending: true });
+    
+    if (ingredientsError) {
+      console.error(ingredientsError);
+    }
+
     const displayTitle =
       currentLanguage === "en" && recipe.title_en
         ? recipe.title_en
@@ -334,11 +347,44 @@
     document.title = displayTitle;
 
 
-    const ingredients = displayIngredients
-      ? displayIngredients
-          .split("\n")
-          .filter(item => item.trim() !== "")
-      : [];
+    const ingredients = (ingredientRows || []).map(ingredient => {
+      const name =
+        currentLanguage === "en"
+          ? (ingredient.name_en || ingredient.name || "")
+          : (ingredient.name || ingredient.name_en || "");
+    
+      const unitLabels = {
+        it: {
+          pcs: "pz",
+          tbsp: "cucchiaio",
+          tsp: "cucchiaino",
+          to_taste: "q.b."
+        },
+    
+        en: {
+          pcs: "pcs",
+          tbsp: "tbsp",
+          tsp: "tsp",
+          to_taste: "to taste"
+        }
+      };
+    
+      const quantity =
+        ingredient.quantity !== null
+          ? ingredient.quantity
+          : "";
+    
+      const unit =
+        ingredient.unit
+          ? (unitLabels[currentLanguage][ingredient.unit] || ingredient.unit)
+          : "";
+    
+      return {
+        name,
+        quantity,
+        unit
+      };
+    });
 
 
     const instructions = displayInstructions
@@ -411,7 +457,11 @@
           <ul class="ingredients">
 
             ${ingredients.map(item => `
-              <li>${item}</li>
+              <li>
+                ${item.quantity ? item.quantity + " " : ""}
+                ${item.unit ? item.unit + " " : ""}
+                ${item.name}
+              </li>
             `).join("")}
 
           </ul>
