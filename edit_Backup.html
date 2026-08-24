@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="it">
+<script defer src="https://umami-omega-ochre-70.vercel.app/script.js" data-website-id="4356a40f-3a0d-4917-aaaf-c462703ec9fa"></script>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="A Tavola">
+
+  <link rel="manifest" href="manifest.json">
+  
+  <title>Modifca ricetta</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f7f6f2;
+      color: #1f1f1f;
+    }
+
+    header {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid #dedbd3;
+    }
+
+    .back {
+      color: #1f1f1f;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 30px 24px 60px;
+    }
+
+    h1 {
+      margin: 0 0 28px;
+      font-size: 28px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    
+    .language-switch {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+    
+    .lang-btn {
+      border: none;
+      background: transparent;
+      padding: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #888;
+    }
+    
+    .lang-btn.active {
+      color: #1f1f1f;
+      font-weight: 700;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #d6d2c9;
+      background: white;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 130px;
+      line-height: 1.5;
+    }
+
+    #ingredients {
+      min-height: 180px;
+    }
+
+    #instructions {
+      min-height: 220px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    button {
+      border: 1px solid #d6d2c9;
+      background: white;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .save {
+      background: #1f1f1f;
+      color: white;
+      border-color: #1f1f1f;
+    }
+
+    .ingredient-row {
+      display: grid;
+      grid-template-columns: 1fr 110px 120px 42px;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .ingredient-row input,
+    .ingredient-row select {
+      width: 100%;
+    }
+    
+    .remove-ingredient {
+      padding: 8px;
+    }
+
+    @media (max-width: 650px) {
+      header {
+        height: 56px;
+        padding: 0 16px;
+      }
+
+      main {
+        padding: 22px 16px 50px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field.full {
+        grid-column: auto;
+      }
+
+      .ingredient-row {
+      grid-template-columns: 1fr 80px 90px 42px;
+      }
+      
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <a href="index.html" class="back" data-i18n="back">← Ricette</a>
+
+  <div class="language-switch">
+    <button type="button" class="lang-btn" data-lang="it">IT</button>
+    <span>|</span>
+    <button type="button" class="lang-btn" data-lang="en">EN</button>
+  </div>
+</header>
+
+<main>
+
+  <h1 data-i18n="pageTitle">Modifica ricetta</h1>
+
+  <form>
+
+    <div class="form-grid">
+
+      <div class="field full">
+        <label for="title" data-i18n="title">Titolo</label>
+        <input id="title" type="text" placeholder="Es. Maiale alle prugne">
+      </div>
+
+      <div class="field">
+        <label for="category" data-i18n="category">Categoria</label>
+      
+        <select id="category">
+          <option value="first">Primi</option>
+          <option value="second">Secondi</option>
+          <option value="sides">Contorni</option>
+          <option value="desserts">Dolci</option>
+          <option value="other">Altro</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="servings" data-i18n="servings">Porzioni</label>
+        <input id="servings" type="number" min="1" placeholder="4">
+      </div>
+
+      <div class="field">
+        <label for="time" data-i18n="time">Tempo</label>
+        <input id="time" type="text" placeholder="45 min">
+      </div>
+
+      <div class="field">
+        <label for="made_by" data-i18n="madeBy">Fatto da</label>
+        <input id="made_by" type="text" placeholder="Es. Matteo">
+      </div>
+
+      <div class="field">
+        <label for="image" data-i18n="image">Immagine</label>
+        <input id="image" type="file" accept="image/*">
+      </div>
+
+      <div class="field full">
+        <label data-i18n="ingredients">Ingredienti</label>
+      
+        <div id="ingredients-list"></div>
+      
+        <button type="button" id="add-ingredient">
+          + Aggiungi ingrediente
+        </button>
+      </div>
+
+      <div class="field full">
+        <label for="instructions" data-i18n="instructions">Preparazione</label>
+        <textarea
+          id="instructions"
+          placeholder="1. Rosola il filetto...&#10;&#10;2. Aggiungi le prugne...&#10;&#10;3. Continua la cottura..."
+        ></textarea>
+      </div>
+
+    </div>
+
+    <div class="actions">
+      <a href="index.html">
+        <button type="button" data-i18n="cancel">Annulla</button>
+      </a>
+
+      <button type="submit" class="save" data-i18n="save">Salva modifche</button>
+    </div>
+
+  </form>
+
+</main>
+<script>
+  const SUPABASE_URL = "https://qhrthaaqsgeyqsnaefhb.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_4jxAO_hOISps1tGhsoiBXA_EW5azn92";
+
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  const form = document.querySelector("form");
+
+  const translations = {
+    it: {
+      back: "← Ricette",
+      pageTitle: "Modifica ricetta",
+      title: "Titolo",
+      category: "Categoria",
+      servings: "Porzioni",
+      time: "Tempo",
+      madeBy: "Fatto da",
+      image: "Immagine",
+      ingredients: "Ingredienti",
+      instructions: "Preparazione",
+      cancel: "Annulla",
+      save: "Salva modifiche",
+
+      ingredient: "Ingrediente",
+      addIngredient: "+ Aggiungi ingrediente",
+
+      categoryFirst: "Primi",
+      categorySecond: "Secondi",
+      categorySides: "Contorni",
+      categoryDesserts: "Dolci",
+      categoryOther: "Altro",
+
+      unitPiece: "pz",
+      unitTablespoon: "cucchiaio",
+      unitTeaspoon: "cucchiaino",
+      unitToTaste: "q.b.",
+
+      titleRequired: "Inserisci il titolo della ricetta.",
+      loadError: "Errore nel caricamento della ricetta.",
+      saved: "Modifiche salvate!",
+      error: "Errore"
+    },
+
+    en: {
+      back: "← Recipes",
+      pageTitle: "Edit recipe",
+      title: "Title",
+      category: "Category",
+      servings: "Servings",
+      time: "Time",
+      madeBy: "Made by",
+      image: "Image",
+      ingredients: "Ingredients",
+      instructions: "Instructions",
+      cancel: "Cancel",
+      save: "Save changes",
+
+      ingredient: "Ingredient",
+      addIngredient: "+ Add ingredient",
+
+      categoryFirst: "First courses",
+      categorySecond: "Main courses",
+      categorySides: "Side dishes",
+      categoryDesserts: "Desserts",
+      categoryOther: "Other",
+
+      unitPiece: "pcs",
+      unitTablespoon: "tbsp",
+      unitTeaspoon: "tsp",
+      unitToTaste: "to taste",
+
+      titleRequired: "Enter the recipe title.",
+      loadError: "Error loading recipe.",
+      saved: "Changes saved!",
+      error: "Error"
+    }
+  };
+
+  function getLanguage() {
+    const params = new URLSearchParams(window.location.search);
+    const urlLang = params.get("lang");
+
+    if (urlLang === "it" || urlLang === "en") {
+      localStorage.setItem("language", urlLang);
+      return urlLang;
+    }
+
+    return localStorage.getItem("language") || "it";
+  }
+
+  function setLanguage(lang) {
+    localStorage.setItem("language", lang);
+    document.documentElement.lang = lang;
+
+    document.querySelectorAll("[data-i18n]").forEach(element => {
+      const key = element.dataset.i18n;
+
+      if (translations[lang][key]) {
+        element.textContent = translations[lang][key];
+      }
+    });
+
+    document.querySelectorAll(".lang-btn").forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.lang === lang
+      );
+    });
+
+    const addButton = document.getElementById("add-ingredient");
+
+    if (addButton) {
+      addButton.textContent =
+        translations[lang].addIngredient;
+    }
+
+    const categorySelect =
+      document.getElementById("category");
+
+    if (categorySelect) {
+      const labels = {
+        first: translations[lang].categoryFirst,
+        second: translations[lang].categorySecond,
+        sides: translations[lang].categorySides,
+        desserts: translations[lang].categoryDesserts,
+        other: translations[lang].categoryOther
+      };
+
+      Object.entries(labels).forEach(([value, text]) => {
+        const option =
+          categorySelect.querySelector(`[value="${value}"]`);
+
+        if (option) {
+          option.textContent = text;
+        }
+      });
+    }
+  }
+
+  document.querySelectorAll(".lang-btn").forEach(button => {
+    button.addEventListener("click", () => {
+      const lang = button.dataset.lang;
+
+      const params =
+        new URLSearchParams(window.location.search);
+
+      params.set("lang", lang);
+
+      window.location.search =
+        params.toString();
+    });
+  });
+
+  const currentLanguage = getLanguage();
+  setLanguage(currentLanguage);
+
+  const params = new URLSearchParams(window.location.search);
+  const recipeId = params.get("id");
+
+  const ingredientsList =
+    document.getElementById("ingredients-list");
+
+  const addIngredientButton =
+    document.getElementById("add-ingredient");
+
+  let currentImageUrl = null;
+
+  function addIngredientRow(
+    name = "",
+    quantity = "",
+    unit = "g"
+  ) {
+    const row =
+      document.createElement("div");
+
+    row.className = "ingredient-row";
+
+    row.innerHTML = `
+      <input
+        type="text"
+        class="ingredient-name"
+        placeholder="${translations[currentLanguage].ingredient}"
+        value="${name}"
+      >
+
+      <input
+        type="number"
+        class="ingredient-quantity"
+        step="any"
+        min="0"
+        placeholder="0"
+        value="${quantity}"
+      >
+
+      <select class="ingredient-unit">
+        <option value="g">g</option>
+        <option value="kg">kg</option>
+        <option value="ml">ml</option>
+        <option value="l">l</option>
+        <option value="pcs">
+          ${translations[currentLanguage].unitPiece}
+        </option>
+        <option value="tbsp">
+          ${translations[currentLanguage].unitTablespoon}
+        </option>
+        <option value="tsp">
+          ${translations[currentLanguage].unitTeaspoon}
+        </option>
+        <option value="to_taste">
+          ${translations[currentLanguage].unitToTaste}
+        </option>
+      </select>
+
+      <button
+        type="button"
+        class="remove-ingredient">
+        ×
+      </button>
+    `;
+
+    row.querySelector(".ingredient-unit").value =
+      unit || "g";
+
+    row
+      .querySelector(".remove-ingredient")
+      .addEventListener("click", () => {
+        row.remove();
+      });
+
+    ingredientsList.appendChild(row);
+  }
+
+  addIngredientButton.addEventListener(
+    "click",
+    () => addIngredientRow()
+  );
+
+  async function loadRecipe() {
+    if (!recipeId) {
+      alert(translations[currentLanguage].loadError);
+      return;
+    }
+
+    const { data: recipe, error } =
+      await supabaseClient
+        .from("recipes")
+        .select("*")
+        .eq("id", recipeId)
+        .single();
+
+    if (error || !recipe) {
+      console.error(error);
+      alert(translations[currentLanguage].loadError);
+      return;
+    }
+
+    const categoryMap = {
+      first: "first",
+      second: "second",
+      sides: "sides",
+      desserts: "desserts",
+      other: "other"
+    };
+
+    document.getElementById("title").value =
+      currentLanguage === "en"
+        ? (recipe.title_en || "")
+        : (recipe.title || "");
+
+    document.getElementById("category").value =
+      categoryMap[recipe.category] || "other";
+
+    document.getElementById("servings").value =
+      recipe.servings || "";
+
+    document.getElementById("time").value =
+      recipe.time || "";
+
+    document.getElementById("made_by").value =
+      recipe.made_by || "";
+
+    document.getElementById("instructions").value =
+      currentLanguage === "en"
+        ? (recipe.instructions_en || "")
+        : (recipe.instructions || "");
+
+    currentImageUrl =
+      recipe.image_url || null;
+
+    const {
+      data: ingredientRows,
+      error: ingredientsError
+    } =
+      await supabaseClient
+        .from("recipe_ingredients")
+        .select("*")
+        .eq("recipe_id", recipeId)
+        .order("id", { ascending: true });
+
+    if (ingredientsError) {
+      console.error(ingredientsError);
+      return;
+    }
+
+    ingredientsList.innerHTML = "";
+
+    if (!ingredientRows || ingredientRows.length === 0) {
+      addIngredientRow();
+      return;
+    }
+
+    ingredientRows.forEach(ingredient => {
+      const name =
+        currentLanguage === "en"
+          ? (ingredient.name_en || ingredient.name || "")
+          : (ingredient.name || ingredient.name_en || "");
+
+      addIngredientRow(
+        name,
+        ingredient.quantity ?? "",
+        ingredient.unit || "g"
+      );
+    });
+  }
+
+  async function compressImage(
+    file,
+    maxSizeKB = 350,
+    maxDimension = 1600
+  ) {
+    if (!file) return null;
+
+    const image = await createImageBitmap(file);
+
+    let width = image.width;
+    let height = image.height;
+
+    if (width > maxDimension || height > maxDimension) {
+      const scale = Math.min(
+        maxDimension / width,
+        maxDimension / height
+      );
+
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+    }
+
+    let quality = 0.85;
+    let blob = null;
+
+    while (true) {
+      const canvas = document.createElement("canvas");
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.drawImage(
+        image,
+        0,
+        0,
+        width,
+        height
+      );
+
+      blob = await new Promise(resolve => {
+        canvas.toBlob(
+          resolve,
+          "image/jpeg",
+          quality
+        );
+      });
+
+      if (!blob) {
+        throw new Error(
+          "Impossibile comprimere l'immagine."
+        );
+      }
+
+      if (blob.size <= maxSizeKB * 1024) {
+        break;
+      }
+
+      if (quality > 0.60) {
+        quality -= 0.05;
+        continue;
+      }
+
+      width = Math.round(width * 0.85);
+      height = Math.round(height * 0.85);
+
+      quality = 0.80;
+
+      if (width < 500 || height < 500) {
+        break;
+      }
+    }
+
+    image.close();
+
+    return new File(
+      [blob],
+      "recipe-image.jpg",
+      {
+        type: "image/jpeg"
+      }
+    );
+  }
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const title =
+      document.getElementById("title").value.trim();
+
+    const category =
+      document.getElementById("category").value;
+
+    const servings =
+      document.getElementById("servings").value;
+
+    const time =
+      document.getElementById("time").value.trim();
+
+    const madeBy =
+      document.getElementById("made_by").value.trim();
+
+    const instructions =
+      document.getElementById("instructions").value.trim();
+
+    const imageFile =
+      document.getElementById("image").files[0];
+
+    const ingredientRows =
+      document.querySelectorAll(".ingredient-row");
+
+    const ingredients = [];
+
+    ingredientRows.forEach(row => {
+      const name =
+        row
+          .querySelector(".ingredient-name")
+          .value
+          .trim();
+
+      const quantityValue =
+        row
+          .querySelector(".ingredient-quantity")
+          .value;
+
+      const unit =
+        row
+          .querySelector(".ingredient-unit")
+          .value;
+
+      if (name) {
+        ingredients.push({
+          name,
+          quantity:
+            quantityValue !== ""
+              ? Number(quantityValue)
+              : null,
+          unit
+        });
+      }
+    });
+
+    if (!title) {
+      alert(
+        translations[currentLanguage].titleRequired
+      );
+      return;
+    }
+
+    try {
+      let imageUrl = currentImageUrl;
+
+      if (imageFile) {
+        const compressedFile =
+          await compressImage(
+            imageFile,
+            350,
+            1600
+          );
+
+        const fileName =
+          crypto.randomUUID() + ".jpg";
+
+        const { error: uploadError } =
+          await supabaseClient
+            .storage
+            .from("recipe-images")
+            .upload(
+              fileName,
+              compressedFile
+            );
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { data: publicUrlData } =
+          supabaseClient
+            .storage
+            .from("recipe-images")
+            .getPublicUrl(fileName);
+
+        imageUrl =
+          publicUrlData.publicUrl;
+      }
+
+      const recipeData = {
+        category,
+        servings:
+          servings
+            ? Number(servings)
+            : null,
+        time: time || null,
+        made_by: madeBy || null,
+        image_url: imageUrl
+      };
+
+      if (currentLanguage === "en") {
+        recipeData.title_en =
+          title;
+
+        recipeData.instructions_en =
+          instructions || null;
+
+      } else {
+        recipeData.title =
+          title;
+
+        recipeData.instructions =
+          instructions || null;
+      }
+
+      const { error: updateError } =
+        await supabaseClient
+          .from("recipes")
+          .update(recipeData)
+          .eq("id", recipeId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      const { error: deleteError } =
+        await supabaseClient
+          .from("recipe_ingredients")
+          .delete()
+          .eq("recipe_id", recipeId);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      if (ingredients.length > 0) {
+        const ingredientData =
+          ingredients.map(ingredient => {
+            const data = {
+              recipe_id:
+                Number(recipeId),
+
+              quantity:
+                ingredient.quantity,
+
+              unit:
+                ingredient.unit || null
+            };
+
+            if (currentLanguage === "en") {
+              data.name_en =
+                ingredient.name;
+            } else {
+              data.name =
+                ingredient.name;
+            }
+
+            return data;
+          });
+
+        const {
+          error: ingredientsError
+        } =
+          await supabaseClient
+            .from("recipe_ingredients")
+            .insert(ingredientData);
+
+        if (ingredientsError) {
+          throw ingredientsError;
+        }
+      }
+
+      alert(
+        translations[currentLanguage].saved
+      );
+
+      window.location.href =
+        `recipe.html?id=${recipeId}&lang=${currentLanguage}`;
+
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        translations[currentLanguage].error +
+        ": " +
+        error.message
+      );
+    }
+  });
+
+  loadRecipe();
+</script>
+</body>
+</html>
