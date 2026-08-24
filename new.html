@@ -519,7 +519,7 @@
 
   addIngredientRow();
 
-    async function compressImage(file, maxSizeKB = 500, maxDimension = 1600) {
+    async function compressImage(file, maxSizeKB = 350, maxDimension = 1600) {
       if (!file) return null;
     
       const image = await createImageBitmap(file);
@@ -683,7 +683,7 @@
         const compressedFile =
           await compressImage(
             imageFile,
-            500,
+            350,
             1600
           );
       
