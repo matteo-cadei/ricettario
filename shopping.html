@@ -186,6 +186,7 @@
       title: "Lista della spesa",
       loading: "Caricamento...",
       empty: "Nessun ingrediente per questa settimana.",
+      error: "Errore nel caricamento.",
       pcs: "pz",
       tbsp: "cucchiaio",
       tsp: "cucchiaino",
@@ -198,6 +199,7 @@
       title: "Shopping list",
       loading: "Loading...",
       empty: "No ingredients for this week.",
+      error: "Error loading data.",
       pcs: "pcs",
       tbsp: "tbsp",
       tsp: "tsp",
@@ -206,8 +208,11 @@
   };
 
   function getLanguage() {
-    const params = new URLSearchParams(window.location.search);
-    const urlLang = params.get("lang");
+    const params =
+      new URLSearchParams(window.location.search);
+
+    const urlLang =
+      params.get("lang");
 
     if (urlLang === "it" || urlLang === "en") {
       localStorage.setItem("language", urlLang);
@@ -217,42 +222,63 @@
     return localStorage.getItem("language") || "it";
   }
 
-  const currentLanguage = getLanguage();
+  const currentLanguage =
+    getLanguage();
 
   function setLanguage(lang) {
     localStorage.setItem("language", lang);
     document.documentElement.lang = lang;
 
-    document.querySelectorAll("[data-i18n]").forEach(element => {
-      const key = element.dataset.i18n;
+    document
+      .querySelectorAll("[data-i18n]")
+      .forEach(element => {
+        const key =
+          element.dataset.i18n;
 
-      if (translations[lang][key]) {
-        element.textContent = translations[lang][key];
-      }
-    });
+        if (translations[lang][key]) {
+          element.textContent =
+            translations[lang][key];
+        }
+      });
 
-    document.querySelectorAll(".lang-btn").forEach(button => {
-      button.classList.toggle(
-        "active",
-        button.dataset.lang === lang
-      );
-    });
+    document
+      .querySelectorAll(".lang-btn")
+      .forEach(button => {
+        button.classList.toggle(
+          "active",
+          button.dataset.lang === lang
+        );
+      });
   }
 
-  document.querySelectorAll(".lang-btn").forEach(button => {
-    button.addEventListener("click", () => {
-      const params = new URLSearchParams(window.location.search);
-      params.set("lang", button.dataset.lang);
-      window.location.search = params.toString();
+  document
+    .querySelectorAll(".lang-btn")
+    .forEach(button => {
+      button.addEventListener("click", () => {
+        const params =
+          new URLSearchParams(window.location.search);
+
+        params.set(
+          "lang",
+          button.dataset.lang
+        );
+
+        window.location.search =
+          params.toString();
+      });
     });
-  });
 
   function getMonday(date) {
-    const d = new Date(date);
-    const day = d.getDay();
+    const d =
+      new Date(date);
+
+    const day =
+      d.getDay();
 
     const difference =
-      d.getDate() - day + (day === 0 ? -6 : 1);
+      d.getDate() -
+      day +
+      (day === 0 ? -6 : 1);
 
     d.setDate(difference);
     d.setHours(0, 0, 0, 0);
@@ -261,47 +287,115 @@
   }
 
   function formatISO(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
+    const year =
+      date.getFullYear();
+
+    const month =
+      String(
+        date.getMonth() + 1
+      ).padStart(2, "0");
+
+    const day =
+      String(
+        date.getDate()
+      ).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
   }
 
+  function getSelectedMonday() {
+    const params =
+      new URLSearchParams(window.location.search);
+
+    const weekParam =
+      params.get("week");
+
+    if (weekParam) {
+      const date =
+        new Date(
+          weekParam + "T00:00:00"
+        );
+
+      if (!isNaN(date)) {
+        return getMonday(date);
+      }
+    }
+
+    return getMonday(new Date());
+  }
+
   function formatWeek() {
-    const monday = getMonday(new Date());
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
+    const monday =
+      getSelectedMonday();
+
+    const sunday =
+      new Date(monday);
+
+    sunday.setDate(
+      monday.getDate() + 6
+    );
 
     const locale =
-      currentLanguage === "en" ? "en-GB" : "it-IT";
+      currentLanguage === "en"
+        ? "en-GB"
+        : "it-IT";
 
-    const startDay = monday.getDate();
-    const endDay = sunday.getDate();
+    const startDay =
+      monday.getDate();
 
-    const startMonth = monday.toLocaleDateString(locale, {
-      month: "long"
-    });
+    const endDay =
+      sunday.getDate();
 
-    const endMonth = sunday.toLocaleDateString(locale, {
-      month: "long"
-    });
+    const startMonth =
+      monday.toLocaleDateString(
+        locale,
+        {
+          month: "long"
+        }
+      );
+
+    const endMonth =
+      sunday.toLocaleDateString(
+        locale,
+        {
+          month: "long"
+        }
+      );
 
     let text;
 
-    if (monday.getMonth() === sunday.getMonth()) {
-      text = `${startDay}–${endDay} ${endMonth}`;
+    if (
+      monday.getMonth() === sunday.getMonth() &&
+      monday.getFullYear() === sunday.getFullYear()
+    ) {
+      text =
+        `${startDay}–${endDay} ${endMonth}`;
     } else {
-      text = `${startDay} ${startMonth} – ${endDay} ${endMonth}`;
+      text =
+        `${startDay} ${startMonth} – ${endDay} ${endMonth}`;
     }
 
-    document.getElementById("week-title").textContent = text;
+    if (
+      monday.getFullYear() !== sunday.getFullYear()
+    ) {
+      text =
+        `${startDay} ${startMonth} ${monday.getFullYear()} – ` +
+        `${endDay} ${endMonth} ${sunday.getFullYear()}`;
+    }
+
+    document
+      .getElementById("week-title")
+      .textContent = text;
   }
 
   function unitLabel(unit) {
-    if (!unit) return "";
+    if (!unit) {
+      return "";
+    }
 
-    if (translations[currentLanguage][unit]) {
+    if (
+      translations[currentLanguage][unit]
+    ) {
       return translations[currentLanguage][unit];
     }
 
@@ -309,130 +403,218 @@
   }
 
   async function loadShoppingList() {
-    const list = document.getElementById("shopping-list");
+    const list =
+      document.getElementById("shopping-list");
 
-    const monday = getMonday(new Date());
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
+    list.innerHTML =
+      `<div class="empty">${translations[currentLanguage].loading}</div>`;
 
-    const { data: meals, error: mealError } =
+    const monday =
+      getSelectedMonday();
+
+    const sunday =
+      new Date(monday);
+
+    sunday.setDate(
+      monday.getDate() + 6
+    );
+
+    const {
+      data: meals,
+      error: mealError
+    } =
       await supabaseClient
         .from("meal_plan")
         .select("recipe_id")
-        .gte("date", formatISO(monday))
-        .lte("date", formatISO(sunday))
-        .not("recipe_id", "is", null);
+        .gte(
+          "date",
+          formatISO(monday)
+        )
+        .lte(
+          "date",
+          formatISO(sunday)
+        )
+        .not(
+          "recipe_id",
+          "is",
+          null
+        );
 
     if (mealError) {
       console.error(mealError);
-      list.innerHTML = `<div class="empty">Errore</div>`;
+
+      list.innerHTML =
+        `<div class="empty">${translations[currentLanguage].error}</div>`;
+
       return;
     }
 
     const recipeIds =
-      [...new Set(
-        (meals || []).map(meal => meal.recipe_id)
-      )];
+      [
+        ...new Set(
+          (meals || [])
+            .map(
+              meal => meal.recipe_id
+            )
+        )
+      ];
 
     if (recipeIds.length === 0) {
       list.innerHTML =
         `<div class="empty">${translations[currentLanguage].empty}</div>`;
+
       return;
     }
 
-    const { data: ingredients, error: ingredientError } =
+    const {
+      data: ingredients,
+      error: ingredientError
+    } =
       await supabaseClient
         .from("recipe_ingredients")
         .select("*")
-        .in("recipe_id", recipeIds);
+        .in(
+          "recipe_id",
+          recipeIds
+        );
 
     if (ingredientError) {
-      console.error(ingredientError);
-      list.innerHTML = `<div class="empty">Errore</div>`;
+      console.error(
+        ingredientError
+      );
+
+      list.innerHTML =
+        `<div class="empty">${translations[currentLanguage].error}</div>`;
+
       return;
     }
 
-    const grouped = new Map();
+    const grouped =
+      new Map();
 
-    (ingredients || []).forEach(item => {
-      const displayName =
-        currentLanguage === "en"
-          ? (item.name_en || item.name || "")
-          : (item.name || item.name_en || "");
+    (ingredients || [])
+      .forEach(item => {
 
-      if (!displayName) return;
+        const displayName =
+          currentLanguage === "en"
+            ? (
+                item.name_en ||
+                item.name ||
+                ""
+              )
+            : (
+                item.name ||
+                item.name_en ||
+                ""
+              );
 
-      const normalizedName =
-        displayName.trim().toLowerCase();
+        if (!displayName) {
+          return;
+        }
 
-      const normalizedUnit =
-        item.unit || "";
+        const normalizedName =
+          displayName
+            .trim()
+            .toLowerCase();
 
-      const key =
-        `${normalizedName}__${normalizedUnit}`;
+        const normalizedUnit =
+          item.unit || "";
 
-      if (!grouped.has(key)) {
-        grouped.set(key, {
-          name: displayName.trim(),
-          quantity: 0,
-          hasQuantity: false,
-          unit: normalizedUnit
-        });
-      }
+        const key =
+          `${normalizedName}__${normalizedUnit}`;
 
-      const entry = grouped.get(key);
+        if (!grouped.has(key)) {
+          grouped.set(
+            key,
+            {
+              name:
+                displayName.trim(),
 
-      if (item.quantity !== null) {
-        entry.quantity += Number(item.quantity);
-        entry.hasQuantity = true;
-      }
-    });
+              quantity: 0,
+
+              hasQuantity: false,
+
+              unit:
+                normalizedUnit
+            }
+          );
+        }
+
+        const entry =
+          grouped.get(key);
+
+        if (item.quantity !== null) {
+          entry.quantity +=
+            Number(
+              item.quantity
+            );
+
+          entry.hasQuantity =
+            true;
+        }
+      });
 
     const items =
       [...grouped.values()]
         .sort((a, b) =>
           a.name.localeCompare(
             b.name,
-            currentLanguage === "en" ? "en" : "it"
+            currentLanguage === "en"
+              ? "en"
+              : "it"
           )
         );
 
     if (items.length === 0) {
       list.innerHTML =
         `<div class="empty">${translations[currentLanguage].empty}</div>`;
+
       return;
     }
 
-    list.innerHTML = items.map(item => {
-      let amount = "";
+    list.innerHTML =
+      items
+        .map(item => {
 
-      if (item.hasQuantity) {
-        amount += item.quantity;
-      }
+          let amount = "";
 
-      if (item.unit) {
-        amount +=
-          `${amount ? " " : ""}${unitLabel(item.unit)}`;
-      }
+          if (
+            item.hasQuantity
+          ) {
+            amount +=
+              item.quantity;
+          }
 
-      return `
-        <label class="shopping-item">
-          <input type="checkbox">
+          if (item.unit) {
+            amount +=
+              `${amount ? " " : ""}${unitLabel(item.unit)}`;
+          }
 
-          <span class="item-name">
-            ${item.name}
-          </span>
+          return `
+            <label class="shopping-item">
 
-          <span class="item-amount">
-            ${amount}
-          </span>
-        </label>
-      `;
-    }).join("");
+              <input type="checkbox">
+
+              <span class="item-name">
+                ${item.name}
+              </span>
+
+              <span class="item-amount">
+                ${amount}
+              </span>
+
+            </label>
+          `;
+        })
+        .join("");
   }
 
-  setLanguage(currentLanguage);
+  setLanguage(
+    currentLanguage
+  );
+
   formatWeek();
+
   loadShoppingList();
 </script>
 
