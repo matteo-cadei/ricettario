@@ -600,7 +600,7 @@
 
   async function compressImage(
     file,
-    maxSizeKB = 500,
+    maxSizeKB = 350,
     maxDimension = 1600
   ) {
     if (!file) return null;
@@ -758,7 +758,7 @@
         const compressedFile =
           await compressImage(
             imageFile,
-            500,
+            350,
             1600
           );
 
