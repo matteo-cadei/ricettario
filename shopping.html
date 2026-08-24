@@ -554,16 +554,77 @@
         }
       });
 
-    const items =
-      [...grouped.values()]
-        .sort((a, b) =>
-          a.name.localeCompare(
-            b.name,
-            currentLanguage === "en"
-              ? "en"
-              : "it"
-          )
-        );
+    function getSortValue(item) {
+  let quantity = item.hasQuantity
+    ? Number(item.quantity)
+    : 0;
+
+  let group = 99;
+
+  switch (item.unit) {
+    case "kg":
+      group = 1;
+      quantity *= 1000;
+      break;
+
+    case "g":
+      group = 1;
+      break;
+
+    case "l":
+      group = 2;
+      quantity *= 1000;
+      break;
+
+    case "ml":
+      group = 2;
+      break;
+
+    case "pcs":
+      group = 3;
+      break;
+
+    case "tbsp":
+      group = 4;
+      break;
+
+    case "tsp":
+      group = 5;
+      break;
+
+    case "to_taste":
+      group = 6;
+      break;
+
+    default:
+      group = 7;
+  }
+
+  return {
+    group,
+    quantity
+  };
+}
+
+const items =
+  [...grouped.values()]
+    .sort((a, b) => {
+      const sortA = getSortValue(a);
+      const sortB = getSortValue(b);
+
+      if (sortA.group !== sortB.group) {
+        return sortA.group - sortB.group;
+      }
+
+      if (sortA.quantity !== sortB.quantity) {
+        return sortB.quantity - sortA.quantity;
+      }
+
+      return a.name.localeCompare(
+        b.name,
+        currentLanguage === "en" ? "en" : "it"
+      );
+    });
 
     if (items.length === 0) {
       list.innerHTML =
