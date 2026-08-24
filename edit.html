@@ -429,8 +429,11 @@
   const currentLanguage = getLanguage();
   setLanguage(currentLanguage);
 
-  const params = new URLSearchParams(window.location.search);
-  const recipeId = params.get("id");
+  const params =
+    new URLSearchParams(window.location.search);
+
+  const recipeId =
+    params.get("id");
 
   const ingredientsList =
     document.getElementById("ingredients-list");
@@ -440,7 +443,15 @@
 
   let currentImageUrl = null;
 
+  /*
+    Qui salviamo gli ID delle righe rimosse con ×.
+    Verranno eliminate da Supabase solo al salvataggio.
+  */
+
+  const deletedIngredientIds = [];
+
   function addIngredientRow(
+    ingredientId = null,
     name = "",
     quantity = "",
     unit = "g"
@@ -450,12 +461,16 @@
 
     row.className = "ingredient-row";
 
+    if (ingredientId !== null) {
+      row.dataset.ingredientId =
+        String(ingredientId);
+    }
+
     row.innerHTML = `
       <input
         type="text"
         class="ingredient-name"
         placeholder="${translations[currentLanguage].ingredient}"
-        value="${name}"
       >
 
       <input
@@ -472,15 +487,19 @@
         <option value="kg">kg</option>
         <option value="ml">ml</option>
         <option value="l">l</option>
+
         <option value="pcs">
           ${translations[currentLanguage].unitPiece}
         </option>
+
         <option value="tbsp">
           ${translations[currentLanguage].unitTablespoon}
         </option>
+
         <option value="tsp">
           ${translations[currentLanguage].unitTeaspoon}
         </option>
+
         <option value="to_taste">
           ${translations[currentLanguage].unitToTaste}
         </option>
@@ -493,12 +512,24 @@
       </button>
     `;
 
+    row.querySelector(".ingredient-name").value =
+      name;
+
     row.querySelector(".ingredient-unit").value =
       unit || "g";
 
     row
       .querySelector(".remove-ingredient")
       .addEventListener("click", () => {
+        const id =
+          row.dataset.ingredientId;
+
+        if (id) {
+          deletedIngredientIds.push(
+            Number(id)
+          );
+        }
+
         row.remove();
       });
 
@@ -512,7 +543,9 @@
 
   async function loadRecipe() {
     if (!recipeId) {
-      alert(translations[currentLanguage].loadError);
+      alert(
+        translations[currentLanguage].loadError
+      );
       return;
     }
 
@@ -525,17 +558,13 @@
 
     if (error || !recipe) {
       console.error(error);
-      alert(translations[currentLanguage].loadError);
+
+      alert(
+        translations[currentLanguage].loadError
+      );
+
       return;
     }
-
-    const categoryMap = {
-      first: "first",
-      second: "second",
-      sides: "sides",
-      desserts: "desserts",
-      other: "other"
-    };
 
     document.getElementById("title").value =
       currentLanguage === "en"
@@ -543,7 +572,7 @@
         : (recipe.title || "");
 
     document.getElementById("category").value =
-      categoryMap[recipe.category] || "other";
+      recipe.category || "other";
 
     document.getElementById("servings").value =
       recipe.servings || "";
@@ -573,7 +602,9 @@
         .order("id", { ascending: true });
 
     if (ingredientsError) {
-      console.error(ingredientsError);
+      console.error(
+        ingredientsError
+      );
       return;
     }
 
@@ -587,10 +618,11 @@
     ingredientRows.forEach(ingredient => {
       const name =
         currentLanguage === "en"
-          ? (ingredient.name_en || ingredient.name || "")
-          : (ingredient.name || ingredient.name_en || "");
+          ? (ingredient.name_en || "")
+          : (ingredient.name || "");
 
       addIngredientRow(
+        ingredient.id,
         name,
         ingredient.quantity ?? "",
         ingredient.unit || "g"
@@ -605,34 +637,57 @@
   ) {
     if (!file) return null;
 
-    const image = await createImageBitmap(file);
+    const image =
+      await createImageBitmap(file);
 
-    let width = image.width;
-    let height = image.height;
+    let width =
+      image.width;
 
-    if (width > maxDimension || height > maxDimension) {
-      const scale = Math.min(
-        maxDimension / width,
-        maxDimension / height
-      );
+    let height =
+      image.height;
 
-      width = Math.round(width * scale);
-      height = Math.round(height * scale);
+    if (
+      width > maxDimension ||
+      height > maxDimension
+    ) {
+      const scale =
+        Math.min(
+          maxDimension / width,
+          maxDimension / height
+        );
+
+      width =
+        Math.round(width * scale);
+
+      height =
+        Math.round(height * scale);
     }
 
     let quality = 0.85;
     let blob = null;
 
     while (true) {
-      const canvas = document.createElement("canvas");
+      const canvas =
+        document.createElement("canvas");
 
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width =
+        width;
 
-      const ctx = canvas.getContext("2d");
+      canvas.height =
+        height;
 
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, width, height);
+      const ctx =
+        canvas.getContext("2d");
+
+      ctx.fillStyle =
+        "#ffffff";
+
+      ctx.fillRect(
+        0,
+        0,
+        width,
+        height
+      );
 
       ctx.drawImage(
         image,
@@ -642,13 +697,14 @@
         height
       );
 
-      blob = await new Promise(resolve => {
-        canvas.toBlob(
-          resolve,
-          "image/jpeg",
-          quality
-        );
-      });
+      blob =
+        await new Promise(resolve => {
+          canvas.toBlob(
+            resolve,
+            "image/jpeg",
+            quality
+          );
+        });
 
       if (!blob) {
         throw new Error(
@@ -656,21 +712,37 @@
         );
       }
 
-      if (blob.size <= maxSizeKB * 1024) {
+      if (
+        blob.size <=
+        maxSizeKB * 1024
+      ) {
         break;
       }
 
-      if (quality > 0.60) {
+      if (
+        quality > 0.60
+      ) {
         quality -= 0.05;
         continue;
       }
 
-      width = Math.round(width * 0.85);
-      height = Math.round(height * 0.85);
+      width =
+        Math.round(
+          width * 0.85
+        );
 
-      quality = 0.80;
+      height =
+        Math.round(
+          height * 0.85
+        );
 
-      if (width < 500 || height < 500) {
+      quality =
+        0.80;
+
+      if (
+        width < 500 ||
+        height < 500
+      ) {
         break;
       }
     }
@@ -686,208 +758,340 @@
     );
   }
 
-  form.addEventListener("submit", async event => {
-    event.preventDefault();
+  form.addEventListener(
+    "submit",
+    async event => {
+      event.preventDefault();
 
-    const title =
-      document.getElementById("title").value.trim();
-
-    const category =
-      document.getElementById("category").value;
-
-    const servings =
-      document.getElementById("servings").value;
-
-    const time =
-      document.getElementById("time").value.trim();
-
-    const madeBy =
-      document.getElementById("made_by").value.trim();
-
-    const instructions =
-      document.getElementById("instructions").value.trim();
-
-    const imageFile =
-      document.getElementById("image").files[0];
-
-    const ingredientRows =
-      document.querySelectorAll(".ingredient-row");
-
-    const ingredients = [];
-
-    ingredientRows.forEach(row => {
-      const name =
-        row
-          .querySelector(".ingredient-name")
+      const title =
+        document
+          .getElementById("title")
           .value
           .trim();
 
-      const quantityValue =
-        row
-          .querySelector(".ingredient-quantity")
+      const category =
+        document
+          .getElementById("category")
           .value;
 
-      const unit =
-        row
-          .querySelector(".ingredient-unit")
+      const servings =
+        document
+          .getElementById("servings")
           .value;
 
-      if (name) {
-        ingredients.push({
-          name,
-          quantity:
-            quantityValue !== ""
-              ? Number(quantityValue)
-              : null,
-          unit
-        });
+      const time =
+        document
+          .getElementById("time")
+          .value
+          .trim();
+
+      const madeBy =
+        document
+          .getElementById("made_by")
+          .value
+          .trim();
+
+      const instructions =
+        document
+          .getElementById("instructions")
+          .value
+          .trim();
+
+      const imageFile =
+        document
+          .getElementById("image")
+          .files[0];
+
+      if (!title) {
+        alert(
+          translations[currentLanguage].titleRequired
+        );
+        return;
       }
-    });
 
-    if (!title) {
-      alert(
-        translations[currentLanguage].titleRequired
-      );
-      return;
-    }
+      try {
+        let imageUrl =
+          currentImageUrl;
 
-    try {
-      let imageUrl = currentImageUrl;
-
-      if (imageFile) {
-        const compressedFile =
-          await compressImage(
-            imageFile,
-            350,
-            1600
-          );
-
-        const fileName =
-          crypto.randomUUID() + ".jpg";
-
-        const { error: uploadError } =
-          await supabaseClient
-            .storage
-            .from("recipe-images")
-            .upload(
-              fileName,
-              compressedFile
+        if (imageFile) {
+          const compressedFile =
+            await compressImage(
+              imageFile,
+              350,
+              1600
             );
 
-        if (uploadError) {
-          throw uploadError;
+          const fileName =
+            crypto.randomUUID() +
+            ".jpg";
+
+          const {
+            error: uploadError
+          } =
+            await supabaseClient
+              .storage
+              .from("recipe-images")
+              .upload(
+                fileName,
+                compressedFile
+              );
+
+          if (uploadError) {
+            throw uploadError;
+          }
+
+          const {
+            data: publicUrlData
+          } =
+            supabaseClient
+              .storage
+              .from("recipe-images")
+              .getPublicUrl(
+                fileName
+              );
+
+          imageUrl =
+            publicUrlData.publicUrl;
         }
 
-        const { data: publicUrlData } =
-          supabaseClient
-            .storage
-            .from("recipe-images")
-            .getPublicUrl(fileName);
+        /*
+          Aggiorniamo i dati principali
+          della ricetta.
+        */
 
-        imageUrl =
-          publicUrlData.publicUrl;
-      }
+        const recipeData = {
+          category,
 
-      const recipeData = {
-        category,
-        servings:
-          servings
-            ? Number(servings)
-            : null,
-        time: time || null,
-        made_by: madeBy || null,
-        image_url: imageUrl
-      };
+          servings:
+            servings
+              ? Number(servings)
+              : null,
 
-      if (currentLanguage === "en") {
-        recipeData.title_en =
-          title;
+          time:
+            time || null,
 
-        recipeData.instructions_en =
-          instructions || null;
+          made_by:
+            madeBy || null,
 
-      } else {
-        recipeData.title =
-          title;
+          image_url:
+            imageUrl
+        };
 
-        recipeData.instructions =
-          instructions || null;
-      }
+        /*
+          Solo la lingua corrente viene modificata.
+        */
 
-      const { error: updateError } =
-        await supabaseClient
-          .from("recipes")
-          .update(recipeData)
-          .eq("id", recipeId);
+        if (
+          currentLanguage === "en"
+        ) {
+          recipeData.title_en =
+            title;
 
-      if (updateError) {
-        throw updateError;
-      }
+          recipeData.instructions_en =
+            instructions || null;
 
-      const { error: deleteError } =
-        await supabaseClient
-          .from("recipe_ingredients")
-          .delete()
-          .eq("recipe_id", recipeId);
+        } else {
+          recipeData.title =
+            title;
 
-      if (deleteError) {
-        throw deleteError;
-      }
+          recipeData.instructions =
+            instructions || null;
+        }
 
-      if (ingredients.length > 0) {
-        const ingredientData =
-          ingredients.map(ingredient => {
-            const data = {
+        const {
+          error: updateError
+        } =
+          await supabaseClient
+            .from("recipes")
+            .update(recipeData)
+            .eq("id", recipeId);
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        /*
+          Eliminiamo solo gli ingredienti
+          effettivamente rimossi con ×.
+        */
+
+        if (
+          deletedIngredientIds.length > 0
+        ) {
+          const {
+            error: deleteError
+          } =
+            await supabaseClient
+              .from("recipe_ingredients")
+              .delete()
+              .in(
+                "id",
+                deletedIngredientIds
+              );
+
+          if (deleteError) {
+            throw deleteError;
+          }
+        }
+
+        /*
+          Ora aggiorniamo o inseriamo
+          ogni riga singolarmente.
+        */
+
+        const ingredientRows =
+          document.querySelectorAll(
+            ".ingredient-row"
+          );
+
+        for (
+          const row of ingredientRows
+        ) {
+          const visibleName =
+            row
+              .querySelector(
+                ".ingredient-name"
+              )
+              .value
+              .trim();
+
+          const quantityValue =
+            row
+              .querySelector(
+                ".ingredient-quantity"
+              )
+              .value;
+
+          const unit =
+            row
+              .querySelector(
+                ".ingredient-unit"
+              )
+              .value;
+
+          const ingredientId =
+            row.dataset.ingredientId
+              ? Number(
+                  row.dataset.ingredientId
+                )
+              : null;
+
+          const quantity =
+            quantityValue !== ""
+              ? Number(quantityValue)
+              : null;
+
+          /*
+            RIGA ESISTENTE:
+            aggiorniamo SOLO name oppure name_en.
+          */
+
+          if (ingredientId) {
+            const updateData = {
+              quantity,
+              unit:
+                unit || null
+            };
+
+            if (
+              currentLanguage === "en"
+            ) {
+              updateData.name_en =
+                visibleName || null;
+            } else {
+              updateData.name =
+                visibleName || null;
+            }
+
+            const {
+              error: ingredientUpdateError
+            } =
+              await supabaseClient
+                .from(
+                  "recipe_ingredients"
+                )
+                .update(
+                  updateData
+                )
+                .eq(
+                  "id",
+                  ingredientId
+                );
+
+            if (
+              ingredientUpdateError
+            ) {
+              throw ingredientUpdateError;
+            }
+
+          /*
+            RIGA NUOVA:
+            creiamo l'ingrediente
+            solo nella lingua corrente.
+          */
+
+          } else {
+            if (!visibleName) {
+              continue;
+            }
+
+            const insertData = {
               recipe_id:
                 Number(recipeId),
 
-              quantity:
-                ingredient.quantity,
+              quantity,
 
               unit:
-                ingredient.unit || null
+                unit || null
             };
 
-            if (currentLanguage === "en") {
-              data.name_en =
-                ingredient.name;
+            if (
+              currentLanguage === "en"
+            ) {
+              insertData.name_en =
+                visibleName;
             } else {
-              data.name =
-                ingredient.name;
+              insertData.name =
+                visibleName;
             }
 
-            return data;
-          });
+            const {
+              error: ingredientInsertError
+            } =
+              await supabaseClient
+                .from(
+                  "recipe_ingredients"
+                )
+                .insert(
+                  insertData
+                );
 
-        const {
-          error: ingredientsError
-        } =
-          await supabaseClient
-            .from("recipe_ingredients")
-            .insert(ingredientData);
-
-        if (ingredientsError) {
-          throw ingredientsError;
+            if (
+              ingredientInsertError
+            ) {
+              throw ingredientInsertError;
+            }
+          }
         }
+
+        alert(
+          translations[currentLanguage].saved
+        );
+
+        window.location.href =
+          `recipe.html?id=${recipeId}&lang=${currentLanguage}`;
+
+      } catch (error) {
+        console.error(error);
+
+        alert(
+          translations[currentLanguage].error +
+          ": " +
+          error.message
+        );
       }
-
-      alert(
-        translations[currentLanguage].saved
-      );
-
-      window.location.href =
-        `recipe.html?id=${recipeId}&lang=${currentLanguage}`;
-
-    } catch (error) {
-      console.error(error);
-
-      alert(
-        translations[currentLanguage].error +
-        ": " +
-        error.message
-      );
     }
-  });
+  );
 
   loadRecipe();
 </script>
