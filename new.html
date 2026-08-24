@@ -519,6 +519,97 @@
 
   addIngredientRow();
 
+    async function compressImage(file, maxSizeKB = 500, maxDimension = 1600) {
+      if (!file) return null;
+    
+      const image = await createImageBitmap(file);
+    
+      let width = image.width;
+      let height = image.height;
+    
+      // Ridimensiona mantenendo le proporzioni
+      if (width > maxDimension || height > maxDimension) {
+        const scale =
+          Math.min(
+            maxDimension / width,
+            maxDimension / height
+          );
+    
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+    
+      let quality = 0.85;
+      let blob = null;
+    
+      while (true) {
+        const canvas = document.createElement("canvas");
+    
+        canvas.width = width;
+        canvas.height = height;
+    
+        const ctx = canvas.getContext("2d");
+    
+        // Sfondo bianco per eventuali PNG trasparenti
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+    
+        ctx.drawImage(
+          image,
+          0,
+          0,
+          width,
+          height
+        );
+    
+        blob = await new Promise(resolve => {
+          canvas.toBlob(
+            resolve,
+            "image/jpeg",
+            quality
+          );
+        });
+    
+        if (!blob) {
+          throw new Error(
+            "Impossibile comprimere l'immagine."
+          );
+        }
+    
+        // Se siamo sotto 500 KB abbiamo finito
+        if (blob.size <= maxSizeKB * 1024) {
+          break;
+        }
+    
+        // Prima abbassiamo leggermente la qualità
+        if (quality > 0.60) {
+          quality -= 0.05;
+          continue;
+        }
+    
+        // Se non basta, riduciamo anche la risoluzione
+        width = Math.round(width * 0.85);
+        height = Math.round(height * 0.85);
+    
+        quality = 0.80;
+    
+        // Protezione contro loop infiniti
+        if (width < 500 || height < 500) {
+          break;
+        }
+      }
+    
+      image.close();
+    
+      return new File(
+        [blob],
+        "recipe-image.jpg",
+        {
+          type: "image/jpeg"
+        }
+      );
+    }
+
   form.addEventListener("submit", async event => {
     event.preventDefault();
 
@@ -589,30 +680,47 @@
       let imageUrl = null;
 
       if (imageFile) {
-        const fileExtension =
-          imageFile.name.split(".").pop();
-
+        const compressedFile =
+          await compressImage(
+            imageFile,
+            500,
+            1600
+          );
+      
+        console.log(
+          "Originale:",
+          Math.round(imageFile.size / 1024),
+          "KB"
+        );
+      
+        console.log(
+          "Compressa:",
+          Math.round(compressedFile.size / 1024),
+          "KB"
+        );
+      
         const fileName =
-          crypto.randomUUID() +
-          "." +
-          fileExtension;
-
+          crypto.randomUUID() + ".jpg";
+      
         const { error: uploadError } =
           await supabaseClient
             .storage
             .from("recipe-images")
-            .upload(fileName, imageFile);
-
+            .upload(
+              fileName,
+              compressedFile
+            );
+      
         if (uploadError) {
           throw uploadError;
         }
-
+      
         const { data: publicUrlData } =
           supabaseClient
             .storage
             .from("recipe-images")
             .getPublicUrl(fileName);
-
+      
         imageUrl =
           publicUrlData.publicUrl;
       }
