@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="A Tavola">
 
   <link rel="manifest" href="manifest.json">
-  
+
   <title>A Tavola</title>
 
   <style>
@@ -42,11 +42,11 @@
     .language-switch {
       justify-self: start;
     }
-    
+
     .logo {
       justify-self: center;
     }
-    
+
     .header-actions {
       justify-self: end;
       display: flex;
@@ -54,27 +54,36 @@
       gap: 10px;
     }
 
-  .lang-btn {
-    border: none;
-    background: transparent;
-    : 4px;
-    font-size: 12px;
-    cursor: pointer;
-    color: #888;
-  }
-  
-  .lang-btn.active {
-    color: #1f1f1f;
-    font-weight: 700;
-  }
-  
+    .lang-btn {
+      border: none;
+      background: transparent;
+      padding: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #888;
+    }
+
+    .lang-btn.active {
+      color: #1f1f1f;
+      font-weight: 700;
+    }
+
     button {
-      border: 0;
+      border: 1px solid #d9d6cf;
+      background: white;
+      border-radius: 8px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .explore-link {
+      text-decoration: none;
+      color: #1f1f1f;
       background: white;
       border: 1px solid #d9d6cf;
       border-radius: 8px;
       padding: 9px 12px;
-      cursor: pointer;
       font-size: 14px;
     }
 
@@ -180,25 +189,29 @@
       <span>|</span>
       <button class="lang-btn" data-lang="en">EN</button>
     </div>
-  
+
     <div class="logo" data-i18n="logo">A Tavola</div>
 
     <div class="header-actions">
-    
+
+      <a href="explore.html">
+        <button class="explore-button" title="Explore">⌕</button>
+      </a>
+
       <a href="calendar.html">
         <button class="calendar-button" title="Calendario">▦</button>
       </a>
-    
+
       <a href="shopping.html">
         <button class="shopping-button" title="Lista della spesa">☷</button>
       </a>
-    
+
       <a href="new.html">
         <button class="add-button">＋</button>
       </a>
-    
+
     </div>
-  
+
   </header>
 
   <main>
@@ -214,6 +227,7 @@
     <div class="recipe-grid" id="recipe-grid"></div>
 
   </main>
+  
 <script>
   const SUPABASE_URL = "https://qhrthaaqsgeyqsnaefhb.supabase.co";
   const SUPABASE_KEY = "sb_publishable_4jxAO_hOISps1tGhsoiBXA_EW5azn92";
