@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="it">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="https://umami-omega-ochre-70.vercel.app/script.js" data-website-id="4356a40f-3a0d-4917-aaaf-c462703ec9fa"></script>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="A Tavola">
+
+  <link rel="manifest" href="manifest.json">
+  
+  <title>A Tavola</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f7f6f2;
+      color: #1f1f1f;
+    }
+
+    header {
+      height: 64px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 0 24px;
+      background: #f7f6f2;
+      border-bottom: 1px solid #dedbd3;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .language-switch {
+      justify-self: start;
+    }
+    
+    .logo {
+      justify-self: center;
+    }
+    
+    .header-actions {
+      justify-self: end;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+  .lang-btn {
+    border: none;
+    background: transparent;
+    : 4px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #888;
+  }
+  
+  .lang-btn.active {
+    color: #1f1f1f;
+    font-weight: 700;
+  }
+  
+    button {
+      border: 0;
+      background: white;
+      border: 1px solid #d9d6cf;
+      border-radius: 8px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .add-button {
+      background: #1f1f1f;
+      color: white;
+      border-color: #1f1f1f;
+    }
+
+    main {
+      padding: 20px 24px 40px;
+    }
+
+    .categories {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-bottom: 20px;
+      padding-bottom: 4px;
+    }
+
+    .category {
+      white-space: nowrap;
+      background: transparent;
+    }
+
+    .category.active {
+      background: #1f1f1f;
+      color: white;
+      border-color: #1f1f1f;
+    }
+
+    .recipe-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .recipe-card {
+      cursor: pointer;
+    }
+
+    .recipe-image {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      border-radius: 10px;
+      display: block;
+      background: #dedbd3;
+    }
+
+    .recipe-title {
+      margin-top: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+
+    @media (max-width: 900px) {
+      .recipe-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 14px 16px;
+      }
+
+      main {
+        padding: 16px;
+      }
+
+      .recipe-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .recipe-title {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+  
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js")
+        .catch(error => {
+          console.error("Service Worker registration failed:", error);
+        });
+    });
+  }
+</script>
+  
+<body>
+
+  <header>
+
+    <div class="language-switch">
+      <button class="lang-btn" data-lang="it">IT</button>
+      <span>|</span>
+      <button class="lang-btn" data-lang="en">EN</button>
+    </div>
+  
+    <div class="logo" data-i18n="logo">A Tavola</div>
+
+    <div class="header-actions">
+    
+      <a href="calendar.html">
+        <button class="calendar-button" title="Calendario">▦</button>
+      </a>
+    
+      <a href="shopping.html">
+        <button class="shopping-button" title="Lista della spesa">☷</button>
+      </a>
+    
+      <a href="new.html">
+        <button class="add-button">＋</button>
+      </a>
+    
+    </div>
+  
+  </header>
+
+  <main>
+
+    <div class="categories">
+      <button class="category active" data-category="all" data-i18n="all">Tutte</button>
+      <button class="category" data-category="first" data-i18n="first">Primi</button>
+      <button class="category" data-category="second" data-i18n="second">Secondi</button>
+      <button class="category" data-category="sides" data-i18n="sides">Contorni</button>
+      <button class="category" data-category="desserts" data-i18n="desserts">Dolci</button>
+    </div>
+
+    <div class="recipe-grid" id="recipe-grid"></div>
+
+  </main>
+<script>
+  const SUPABASE_URL = "https://qhrthaaqsgeyqsnaefhb.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_4jxAO_hOISps1tGhsoiBXA_EW5azn92";
+
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  const translations = {
+    it: {
+      logo: "A Tavola",
+      all: "Tutte",
+      first: "Primi",
+      second: "Secondi",
+      sides: "Contorni",
+      desserts: "Dolci",
+      loadError: "Errore nel caricamento delle ricette.",
+      noRecipes: "Non ci sono ricette in questa categoria."
+    },
+
+    en: {
+      logo: "Our Table",
+      all: "All",
+      first: "First courses",
+      second: "Main courses",
+      sides: "Side dishes",
+      desserts: "Desserts",
+      loadError: "Error loading recipes.",
+      noRecipes: "There are no recipes in this category."
+    }
+  };
+
+  let currentLanguage =
+    localStorage.getItem("language") || "en";
+
+  let currentCategory = "all";
+
+  let allRecipes = [];
+
+  async function loadRecipes() {
+    const grid =
+      document.getElementById("recipe-grid");
+
+    const { data: recipes, error } =
+      await supabaseClient
+        .from("recipes")
+        .select("*")
+        .order("created_at", {
+          ascending: false
+        });
+
+    if (error) {
+      console.error(error);
+
+      grid.innerHTML =
+        `<p>${translations[currentLanguage].loadError}</p>`;
+
+      return;
+    }
+
+    allRecipes = recipes || [];
+
+    renderRecipes();
+  }
+
+  function renderRecipes() {
+    const grid =
+      document.getElementById("recipe-grid");
+
+    const filteredRecipes =
+      currentCategory === "all"
+        ? allRecipes
+        : allRecipes.filter(
+            recipe =>
+              recipe.category === currentCategory
+          );
+
+    if (filteredRecipes.length === 0) {
+      grid.innerHTML =
+        `<p>${translations[currentLanguage].noRecipes}</p>`;
+
+      return;
+    }
+
+    grid.innerHTML =
+      filteredRecipes.map(recipe => {
+
+        const image =
+          recipe.image_url
+            ? recipe.image_url
+            : "https://placehold.co/600x450?text=Ricetta";
+
+        const displayTitle =
+          currentLanguage === "en" && recipe.title_en
+            ? recipe.title_en
+            : recipe.title;
+
+        return `
+          <a
+            href="recipe.html?id=${recipe.id}&lang=${currentLanguage}"
+            class="recipe-card"
+            style="text-decoration:none; color:inherit;"
+          >
+            <img
+              class="recipe-image"
+              src="${image}"
+              alt="${displayTitle || ""}"
+            >
+
+            <div class="recipe-title">
+              ${displayTitle || "—"}
+            </div>
+          </a>
+        `;
+      }).join("");
+  }
+
+  function setLanguage(lang) {
+    currentLanguage = lang;
+
+    localStorage.setItem(
+      "language",
+      lang
+    );
+
+    document.documentElement.lang =
+      lang;
+
+    document
+      .querySelectorAll("[data-i18n]")
+      .forEach(element => {
+
+        const key =
+          element.dataset.i18n;
+
+        if (translations[lang][key]) {
+          element.textContent =
+            translations[lang][key];
+        }
+      });
+
+    document
+      .querySelectorAll(".lang-btn")
+      .forEach(button => {
+
+        button.classList.toggle(
+          "active",
+          button.dataset.lang === lang
+        );
+      });
+
+    renderRecipes();
+  }
+
+  document
+    .querySelectorAll(".lang-btn")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+          setLanguage(
+            button.dataset.lang
+          );
+        }
+      );
+    });
+
+  document
+    .querySelectorAll(".category")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          currentCategory =
+            button.dataset.category;
+
+          document
+            .querySelectorAll(".category")
+            .forEach(categoryButton => {
+
+              categoryButton.classList.toggle(
+                "active",
+                categoryButton === button
+              );
+            });
+
+          renderRecipes();
+        }
+      );
+    });
+
+  setLanguage(currentLanguage);
+
+  loadRecipes();
+</script>
+</body>
+</html>
